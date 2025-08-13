@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公交站名Wordle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 15px;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-bottom: 3px solid #3498db;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .game-description {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            text-align: center;
+            color: #ddd;
+        }
+        
+        .highlight {
+            background: rgba(255, 100, 100, 0.3);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        
+        .game-section {
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+        
+        #citySelection {
+            display: block;
+        }
+        
+        .city-selection {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .city-btn {
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: none;
+            background: #3498db;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-width: 150px;
+        }
+        
+        .city-btn:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        .city-btn:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .city-btn:hover {
+            transform: translateY(-5px);
+            background: #2980b9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .city-btn .routes-count {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            font-weight: normal;
+            z-index: 2;
+        }
+        
+        .length-selection {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .length-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #3498db;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .length-btn:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        .length-btn:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .length-btn:hover {
+            transform: translateY(-5px);
+            background: #2980b9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .length-btn .count {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: normal;
+            z-index: 2;
+        }
+        
+        .game-board-container {
+            max-height: 50vh;
+            overflow-y: auto;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            margin: 10px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-board-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .game-board-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .game-board-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+        
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .guess-row {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .guess-cell {
+            width: 58px;
+            height: 58px;
+            border: 2px solid #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .guess-cell:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 6px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .correct {
+            background-color: #2ecc71;
+            border-color: #27ae60;
+            animation: pop 0.3s ease;
+        }
+        
+        .present {
+            background-color: #f1c40f;
+            border-color: #f39c12;
+            animation: pop 0.3s ease;
+        }
+        
+        .absent {
+            background-color: #7f8c8d;
+            border-color: #34495e;
+            animation: pop 0.3s ease;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .same-line {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .same-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 100, 100, 0.4);
+            z-index: 1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.4; }
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 500px;
+            justify-content: center;
+        }
+        
+        #stationInput {
+            flex: 1;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #stationInput:focus {
+            border-color: #1abc9c;
+            box-shadow: 0 0 10px rgba(26, 188, 156, 0.5);
+        }
+        
+        button {
+            padding: 12px 18px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        
+        button:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        button:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+        }
+        
+        .back-btn {
+            background: #95a5a6;
+            margin: 15px auto;
+            display: block;
+            width: 150px;
+            justify-content: center;
+        }
+        
+        .back-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .back-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .back-btn:disabled:hover:after {
+            transform: none;
+        }
+        
+        .dev-tools {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(30, 30, 50, 0.8);
+            position: relative;
+            border: 1px solid #3498db;
+            display: none;
+        }
+        
+        .dev-tools:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #3498db, #9b59b6);
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .dev-title {
+            text-align: center;
+            margin-bottom: 12px;
+            color: #f1c40f;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .dev-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        
+        .dev-btn {
+            background: #9b59b6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+        }
+        
+        .answer-preview {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            border: 1px solid #3498db;
+        }
+        
+        .answer-preview span {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            display: none;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+            animation: scaleIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal-content:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(to right, #3498db, #9b59b6, #2ecc71);
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #f1c40f;
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+        }
+        
+        .modal-stats {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .routes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .routes-table th {
+            background: #3498db;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        
+        .routes-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #444;
+            font-size: 0.9rem;
+        }
+        
+        .routes-table tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .station-tag {
+            display: inline-block;
+            background: rgba(52, 152, 219, 0.3);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .station-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            background: rgba(52, 152, 219, 0.5);
+        }
+        
+        .route-tag {
+            display: inline-block;
+            background: rgba(155, 89, 182, 0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.85rem;
+        }
+        
+        .attempts-counter {
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 12px 0;
+            color: #f1c40f;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+        
+        .give-up-btn {
+            background: #e74c3c;
+        }
+        
+        .bus-icon {
+            margin-right: 6px;
+        }
+        
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            padding: 12px;
+            animation: fadeIn 1s ease;
+        }
+        
+        .hint-box {
+            background: rgba(30, 40, 60, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            max-width: 700px;
+            border-left: 4px solid #3498db;
+            font-size: 0.9rem;
+            animation: fadeIn 0.6s ease;
+        }
+        
+        .hint-title {
+            color: #3498db;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .toggle-btn {
+            background: #1abc9c;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .mobile-note {
+            color: #f1c40f;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        
+        .dev-content {
+            display: none;
+        }
+        
+        .route-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        
+        .input-controls {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .empty-row .guess-cell {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #555;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+                gap: 10px;
+            }
+            
+            .guess-cell {
+                width: 48px;
+                height: 48px;
+                font-size: 1.6rem;
+            }
+            
+            .length-btn, .city-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.6rem;
+            }
+            
+            .input-area {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .modal-buttons, .game-controls, .dev-buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+            
+            .dev-title {
+                font-size: 1rem;
+                flex-direction: column;
+            }
+            
+            .dev-buttons {
+                gap: 8px;
+            }
+            
+            .dev-btn {
+                padding: 16px;
+                font-size: 0.9rem;
+                min-width: 100%;
+                min-height: 60px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+            
+            .dev-tools {
+                margin-top: 15px;
+                padding: 12px;
+            }
+            
+            .dev-title h3 {
+                margin: 8px 0;
+            }
+            
+            .dev-content {
+                position: relative;
+                z-index: 20;
+            }
+            
+            .answer-preview {
+                padding: 10px;
+            }
+            
+            .game-section {
+                padding-bottom: 20px;
+            }
+        }
+        
+        @media (max-height: 600px) {
+            .container {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .game-board-container {
+                max-height: 35vh;
+            }
+            
+            .guess-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-bus"></i> 芜湖公交站名Wordle</h1>
+            <div class="game-description">
+                <span class="highlight">绿色</span>表示位置正确，<span class="highlight">黄色</span>表示站名包含该字但位置错误，
+                如果猜的站名和答案在<span class="highlight">同一条线路</span>上，会有<span class="highlight">淡红色背景</span>提示！
+            </div>
+        </header>
+        
+        <!-- 城市选择界面 -->
+        <section id="citySelection" class="game-section">
+            <h2><i class="fas fa-map-marker-alt"></i> 请选择区域</h2>
+            <div class="city-selection" id="citySelectionContainer">
+                <!-- 城市按钮由JS动态生成 -->
+            </div>
+        </section>
+        
+        <!-- 字数选择界面 -->
+        <section id="wordLengthSelection" class="game-section">
+            <h2><i class="fas fa-route"></i> 请选择站名字数</h2>
+            <div class="length-selection" id="lengthSelection">
+                <!-- 按钮由JS动态生成 -->
+            </div>
+            <button id="backToCityBtn" class="back-btn">
+                <i class="fas fa-arrow-left"></i> 返回区域选择
+            </button>
+        </section>
+        
+        <!-- 游戏主界面 -->
+        <section id="gamePlay" class="game-section">
+            <div style="text-align: center; margin-bottom: 10px;">
+                <button id="backToLengthBtn" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> 返回字数选择
+                </button>
+            </div>
+            
+            <div class="attempts-counter"><i class="fas fa-redo"></i> 尝试次数: <span id="attemptCount">0</span></div>
+            
+            <div class="game-board-container">
+                <div class="game-board" id="gameBoard">
+                    <!-- 游戏板由JS动态生成 -->
+                </div>
+            </div>
+            
+            <div class="input-controls">
+                <div class="input-area">
+                    <input type="text" id="stationInput" placeholder="输入公交站名..." maxlength="-1" autocomplete="off">
+                    <button id="submitGuess"><i class="fas fa-paper-plane"></i> 提交</button>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="giveUpBtn" class="give-up-btn"><i class="fas fa-flag"></i> 认输</button>
+                </div>
+            </div>
+            
+            <!-- 开发者工具区域 -->
+            <div class="dev-tools-wrapper">
+                <div class="dev-tools">
+                    <div class="dev-title">
+                        <i class="fas fa-tools"></i>
+                        <h3>作弊工具</h3>
+                    </div>
+                    
+                    <div id="devContent" class="dev-content">
+                        <div class="dev-buttons">
+                            <button id="peekAnswerBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-eye"></i> 偷看答案
+                            </button>
+                            <button id="refreshAnswerBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-sync"></i> 刷新谜底
+                            </button>
+                            <button id="toggleRoutesBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-bus"></i> 切换线路表
+                            </button>
+                        </div>
+                        
+                        <div class="answer-preview" id="answerPreview">
+                            <p>正确答案: <span id="answerDisplay">未选择</span></p>
+                            <div class="route-list" id="routeList">
+                                <!-- 线路标签由JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="routes-table" id="routesTable">
+                <thead>
+                    <tr>
+                        <th>线路</th>
+                        <th>站点(点击站点可设置答案为该站点)</th>
+                    </tr>
+                </thead>
+                <tbody id="routesTableBody">
+                    <!-- 线路表由JS动态生成 -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+    
+    <div class="result-modal" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="resultTitle"><i class="fas fa-trophy"></i> 恭喜你猜对了！</h2>
+            <div class="modal-stats">
+                <p>区域: <span id="resultCity" style="color:#3498db; font-weight:bold;"></span></p>
+                <p>正确答案: <span id="correctAnswer" style="color:#2ecc71; font-weight:bold;"></span></p>
+                <p>所在线路: </p>
+                <div class="route-list" id="modalRouteList">
+                    <!-- 线路标签由JS动态生成 -->
+                </div>
+                <p>尝试次数: <span id="finalAttemptCount" style="color:#3498db;"></span></p>
+            </div>
+            <div class="modal-buttons">
+                <button id="playAgainBtn"><i class="fas fa-redo"></i> 再来一局</button>
+                <button id="changeCityBtn"><i class="fas fa-map-marker-alt"></i> 更换区域</button>
+                <button id="changeLengthBtn"><i class="fas fa-exchange-alt"></i> 选择其他字数</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p><i class="fas fa-code"></i> 芜湖公交站名Wordle - V1.0(在答案框输入鬼狐王会有意想不到的效果)</p>
+    </footer>
+
+    <script>
+        // 城市公交数据
+        const cityBusData = {
+            "1-102路": {
+            "1路":["红旗","红旗路口","王家巷","第二十七中学","长江中路赭山路","第十一中学","八佰伴","凤凰美食街","鸠江饭店","徽商城","中和路","融汇中江广场","二街","北门","芜湖古城","第二人民医院","荟萃中学","卡子街","黄山园","东外街","笆斗街","百蕊山庄","砻坊路口","皖医二附院东","大砻坊"],
+            "2路":["马塘新镇","元山村","瑞丰商博城南","弋江路马仁山路","瑞丰商博城东","瑞丰商博城","瑞东园","大营新村","南瑞新城","奥韵康城","南关","中江新村","弋江区政府","新时代商业街","二街","新百大厦","融汇中江广场","中和路","电讯大楼","新市口","新市口北","吉和路","王稼祥纪念园","第十一中学","长江中路赭山路","健美小区","弋矶山"],
+            "3路":["新市口北","新市口","电讯大楼","徽商城","鸠江饭店","凤凰美食街","八佰伴","第十一中学","长江中路赭山路","第二十七中学","王家巷","红旗路口","红旗","长江北路","景江东方","杨家门","芜湖宁静医院","潜水装备厂北","污水处理厂","长江路武夷山路","长江路武夷山路北","锅炉厂","合南社区","百线广场","经济开发区","华东玻璃厂","融汇化工","四褐山街道办","第七中学","电厂新奥中心","四褐山公交首末站","冶炼厂","衡山西路","美智空调","滨江新居","益安小区","褐山花苑一期","龙山西路"],
+            "4路":["城东公交枢纽","市公安局消防支队","方特东方神画水上乐园","方特梦幻王国","第一人民医院","赤铸山路安澜路","第一中学东门","河清路","赤铸山路海晏路","赤铸山路河清路","政务中心市民服务中心","时雨景观桥","市博物馆","政通路口","金融中心","赤铸山路中江大道","新塘","赤铸山路云从路","赤铸山路鸠江北路","神山公园","赤铸山立交东","海创汀海壹品","五里汀","汀棠公园东方蓝海","天和苑","五一小区","赭山公园","广济寺","鸠兹广场","中和路","融汇中江广场","盆塘沿","金鹰国际广场","新时代商业街西","利民西路","弋江区政府西","市中心血站报业集团","红花山西路","长江之歌东","华仑港湾"],
+            "5路":["弋矶山北","轮渡路","健美小区","长盛医院","供水总公司","红梅新村","市文化馆绿影新村","福海家具西","大富新村","泰苑小区","莲塘牡丹园","方特欢乐世界南","银湖北路天柱山路","芜湖科技馆","芜湖长江大桥","芜湖职院北区西门","芜湖职院北区北门","莘苑学生公寓","晋家楼","信德翡翠湾","信德半岛","武夷山路口","三塘","芜铁机务段","二十里","公交集团公司","杨塘湾","芜铁车辆段","中达电子公司","综合保税区师大天门山校区","三十里","衡山路口","小红星","红星","龙山花园","华山路","天门花园","向阳路","保顺路一号站","嘉正欧意工业园","保顺路","三安光电"],
+            "6路":["陶沟","新市口","电讯大楼","鸠兹广场","广济寺","赭山公园","五一小区","天和苑","汀棠公园东方蓝海","钱桥路口","市交警支队","十里牌立交桥","十里牌","金圃花鸟市场","金湾","武夷山路口","三塘","芜铁机务段","二十里","公交集团公司","杨塘湾","芜铁车辆段","中达电子公司","综合保税区师大天门山校区","三十里","衡山路口","小红星","红星","龙山花园","华山路","天门小学","经开区管委会"],
+            "7路":["政务新区","政务中心市民服务中心","河清路","第一中学","河清路","金融中心","政通路口","柏庄观邸","神山路口","汽车部件园","中江大道","中江大道路口","北京中路","国家广告产业园","安徽工程大学","第五人民医院","神山口","神山口东","联盛广场","世纪花园","五一广场东","五一广场西","供水总公司","长盛医院","健美小区","弋矶山"],
+            "8路":["杨家门","景江东方","长江北路","第二十九中学","中级人民法院","莲塘新村","颐景湾畔","鸠江区政府","市交警支队","钱桥路口","汀棠公园东方蓝海","天和苑","五一小区","赭山公园","广济寺","鸠兹广场","中和路","融汇中江广场","盆塘沿","金鹰国际广场","新时代商业街西","华仑港湾","长江之歌东","中山南路三号站","中山南路大工山路","大工山路中山南路"],
+            "9路":["杨家门","景江东方","长江北路","红旗","红旗路口","王家巷","第二十七中学","长盛医院","供水总公司","五一广场西","五一小区","赭山公园","广济寺","九华中路","荟萃中学","卡子街","黄山园","皖医二附院","康复路","大砻坊","袁泽桥","第三人民医院西","黄山东路二号站","第三人民医院","棠梅小学","黄山东路一号站","镜湖世纪城"],
+            "10路":["芜湖站东广场上客点","芜湖站东广场下客点","花塘","烈士陵园","站南路口","神山口","神山口北","联盛广场","世纪花园","五一广场东","五一小区","赭山公园","广济寺","九华中路","第二人民医院","中江桥北","奥体中心","奥体中心南","中医药高专","博览中心北","乌霞山路","中央城","马场村","师大花津校区","芜湖职院南区东门","高新区软件园","奇瑞新能源","花津南路一号站","芜湖南站西","芜湖南站下客点","芜湖南站上客点"],
+            "11 路":["荆山公交首末站","荆山花园东区","荆山花园西区","利民东路一号站","丁村","荆山","化工厂","荆山小学","大北沟","北埂桥北","北埂桥南","棋盘电房","镜湖天成商业广场","东埂","天成村委会","娘殿","天民学校","马厂村委会","马厂","竹元拐","东联","刘桥","石桥","方村学校","五村","方村新区","方村街道办","天方市场"],
+            "12 路":["镜湖世纪城","黄山东路一号站","棠梅小学","第三人民医院","袁泽桥","大砻坊","康复路","皖医二附院","黄山园","卡子街","荟萃中学","第三中学","鸠兹广场","电讯大楼","新市口","新市口北","吉和路","王稼祥纪念园","第十一中学","长江中路赭山路","第二十七中学","赤铸山西路"],
+            "13 路":["市眼科医院","三潭路禹王宫路","中江新村","弋江区政府","新时代商业街","三潭公园","三潭路中山南路","融汇中江广场","中和路","电讯大楼","新市口","新市口北","吉和路","王稼祥纪念园","第十一中学","长江中路赭山路","第二十七中学","王家巷","梅园小区","田家炳实验中学","大富新村","泰苑小区","莲塘牡丹园","方特欢乐世界南","银湖北路天柱山路","芜湖科技馆","芜湖长江大桥","水阳江路","莘苑学生公寓","晋家楼","金湾小区","金湾","武夷山路口","三塘","芜铁机务段","二十里","公交集团公司","杨塘湾","芜铁车辆段","中达电子公司","综合保税区","大圣小区","综保区公交首末站"],
+            "14 路":["高速御府","南塘湖路","师大附小","弋江嘉园","中建五百米江南春城","烟厂","李巷","南关","中江新村","弋江区政府","利民西路","新时代商业街西","金鹰国际广场","盆塘沿","融汇中江广场","中和路","徽商城","鸠江饭店","凤凰美食街","八佰伴","第十一中学","长江中路赭山路","第二十七中学","王家巷","梅园小区","田家炳实验中学","福海家具北","五里汀","海创汀海壹品","赤铸山立交东","神山公园","旭日天都南","旭日天都中","旭日天都公交场","旭日天都西"],
+            "15 路":["鸠兹古镇首末站","徽州路万春中路","鸠兹古镇东","鸠兹古镇西","万春路七号站","安澜路北","安澜路陈棱路","仁济医院光明社区","安澜路赤铸山路北","赤铸山路安澜路","第一中学东门","河清路","赤铸山路海晏路","赤铸山路河清路","政务中心市民服务中心","时雨景观桥","市博物馆","中江公园一号站","中江公园二号站","雕塑公园","神山路","雕塑公园南","二炮干休所","神山口南","神山口东","段家园","西洋湖","小平山","北塘小学","卡子街","荟萃中学","第三中学","徽商城","黄山西路","古玩市场","滨江公园","滨江客运码头","吉和路"],
+            "16 路":["陶沟","新市口","电讯大楼","鸠兹广场","第三中学","荟萃中学","卡子街","黄山园","东外街","马仁山东路口","红花山东路口","仓津路乌霞山东路","乌霞山东路","乌霞山路南塘湖路","第四人民医院市中医院北","博览中心中医医院","柏庄丽城","柏庄春暖花开","马饮","九华南路峨山路","高新开发区","公交驾校","回然园","垃圾处理站","神仙台陵园","火龙岗镇","芜湖海螺医院","弋江交警中队","外赵村","永胜村","陶村"],
+"17 路":["鸠江开发区","恒泰铜材公司","万春西路","大阳垾公园北","阳瀚路口","祥泰路口","鸠江区法院","十里牌","十里牌立交桥","市交警支队","钱桥路口","汀棠公园东方蓝海","福海家具北","福海家具西","市文化馆绿影新村","红梅新村","五一广场西","五一小区","赭山公园","广济寺","九华中路","荟萃中学","卡子街","黄山园","东外街","马仁山东路口","南瑞公交首末站","红花山路元塘路","元塘路红花山路","南瑞实验学校","马仁山东路"],
+"18 路":["芜湖南站上客点","芜湖南站下客点","芜湖南站西","天子港路南昌路","天子港路吴梅山路","公交驾校","高新开发区","九华南路峨山路","马饮","柏庄春暖花开","柏庄丽城","博览中心南","文津小区","中央城","第十二中学市口腔医院","市中心血站报业集团","弋江区政府西","新时代商业街","二街","新百大厦","融汇中江广场","中和路","电讯大楼","新市口","新市口东","吾悦广场","第十一中学","长江中路赭山路","第二十七中学","王家巷","红旗路口","红旗","长江北路","景江东方","杨家门","港一路公交枢纽","芜湖长江大桥","芜湖科技馆","银湖北路天柱山路","景观大道东","景观大道西"],
+"19 路":["烟厂","奥体中心南","奥体中心","中江桥北","第二人民医院","九华中路","人民保险公司","广电中心","民生银行芜湖分行","芜湖站西广场下客点","芜湖站西广场上客点","梅莲路","长途汽车站","芜湖站西广场上客点","芜湖站西广场下客点","五一广场东","五一广场西","红梅新村","市文化馆绿影新村","福海家具西","大富新村","泰苑小区","中级人民法院","第二十九中学","长江北路","景江东方","杨家门","芜湖宁静医院","潜水装备厂北","污水处理厂","长江路武夷山路","长江路武夷山路北","锅炉厂","合南社区","百线广场","经济开发区","华东玻璃厂","融汇化工","四褐山街道办","第七中学","电厂新奥中心","四褐山公交首末站"],
+"20 路":["芜湖南站上客点","芜湖南站下客点","芜湖南站西","天子港路南昌路","天子港路吴梅山路","公交驾校","高新开发区","九华南路峨山路","马饮","文津东路","南塘湖路","师大附小","弋江嘉园二期","信亚云谷","大工山路东","瑞丰商博城南","弋江路马仁山路","瑞丰商博城东","西洋湖","段家园","神山口北","神山口南","站南路口","烈士陵园","芜湖站东广场上客点","芜湖站东广场下客点","花塘","赤铸山立交东","神山公园","鸠江北路","旭日天都东","大阳垾湿地公园","育才路","阳天路口","南翔万商一号站","新华联梦想城","大阳垾公园东","市气象局","鸠江区政务服务中心"],
+"21 路":["荆山公交首末站","荆山花园东区","荆山花园西区","利民东路一号站","荆山桥北","水岸星城华康医院","新庄","卜家店北","中江大道路口","北京中路","国家广告产业园","安徽工程大学","第五人民医院","神山口","神山口东","联盛广场","民生银行芜湖分行","广电中心","人民保险公司","鸠兹广场","电讯大楼","新市口"],
+"22 路":["碧桂园","安师大二附中","螃蟹矶","大弯子","澛港三区","澛港大桥西","松鼠小镇和平医院北","高新区管委会","澛港大市场","机电学院西","皖医滨江校区北区南门机电学院北门","皖医滨江校区北区东门","中山南路大工山路","中山南路三号站","长江之歌东","华仑港湾","银泰城","爱国新村","箱子拐","临江桥","冰冻街口","新市口","电讯大楼","鸠江饭店"],
+"23 路":["城北公交枢纽","信义特种玻璃西门","信义特种玻璃中门","信义特种玻璃东门","信义特种玻璃中门","信义特种玻璃西门","城北公交枢纽","凤鸣湖路东梁山路","东梁小区","金鼎锅炉","华山路口","欧宝机电","新泉公司","泰山路","新里城","巢湖路","奇瑞城北公寓","汽车电子创业园","龙山隧道北","龙山隧道南","凤鸣湖路龙山路","凤鸣湖路汽纬一路","凤鸣湖路鞍山路","张恒春药业","奇瑞三号门","奇瑞二号门","奇瑞一号门","银湖北路港湾路","科创中心","银湖北路裕安路","银湖公园","银湖北路武夷山路","芜湖职院北区西门","芜湖长江大桥","芜湖科技馆","银湖北路天柱山路","方特欢乐世界南","莲塘牡丹园","泰苑小区","大富新村","福海家具西","市文化馆绿影新村","红梅新村","星隆国际城","皖南医学院北","师大附中","凤凰美食街","徽商城","鸠兹广场","鸠江饭店"],
+"24 路":["高新区公交枢纽","源大管业","强力帆布","源大管业","火炬创业园","问天量子","澛港大市场","机电学院南门","芜湖职院南区北门","师大花津校区","马场村","中央城","第十二中学市口腔医院","市中心血站报业集团","弋江区政府西","新时代商业街","二街","融汇中江广场","中和路","徽商城","鸠江饭店","凤凰美食街","师大附中","皖南医学院北","星隆国际城","红梅新村","市文化馆绿影新村","福海家具西","田家炳实验中学","梅园小区","王家巷","红旗路口","红旗","春江花园"],
+"25/35 路":["鸠兹家苑","赛格电子市场","邮件处理中心","鸠江区政府","颐景湾畔","莲塘新村","中级人民法院","第二十九中学","红旗","红旗路口","王家巷","第二十七中学","健美小区","弋矶山","健美小区","长江中路赭山路","第十一中学","八佰伴","凤凰美食街","徽商城","人民保险公司","镜湖小学","曹家山","神山口立交桥","神山口南","神山口北","站南路口","芜湖站东广场上客点","芜湖站东广场下客点","芜湖站东广场北","汀苑路","五里汀","五里汀","海创汀海壹品","赤铸山立交东","神山公园","鸠江北路","旭日天都东","鸠兹家苑东","鸠兹家苑南门","鸠兹创业街","鸠兹家苑"],
+"26 路":["鸠兹家苑","赛格电子市场","邮件处理中心","市交警支队","钱桥路口","汀棠公园东方蓝海","天和苑","五一小区","赭山公园","广济寺","九华中路","第二人民医院","中江桥北","南关","李巷","烟厂","中建五百米江南春城","乌霞山路南塘湖路","第四人民医院市中医院北","博览中心北","乌霞山路","中央城","马场村","师大花津校区","芜湖职院南区东门","芜湖职院南区南门华夏科技园","芜湖机电学校","澛港新镇","高新区管委会","新元机动车检测","高新综合服务区"],
+            "27路":["南翔万商","南翔万商一号站","新华联梦想城","大阳垾公园东","第一中学西","赤铸山路中江大道","赤铸山路河清路","政务中心市民服务中心","金浩仁和天地","国泰路河清路","中江中学","海晏路神山路","国泰路安澜路","安澜路神山路","神山路安澜路","神山路东","神山路河清路","清风路口","天池路神山路","城东小区","鸠兹小学","云从路","云从路北京中路","第二十七中分校","黄山东路","镜湖世纪城","黄山东路一号站","棠梅小学","第三人民医院","袁泽桥","大砻坊","康复路","皖医二附院","黄山园","卡子街","荟萃中学","第二人民医院","芜湖古城","北门","二街","新百大厦","融汇中江广场","中和路","电讯大楼","新市口","大剧院","陶沟","新市口北"],
+            "28/38路":["镜湖世纪城","黄山东路一号站","黄山东路二号站","小平山","北塘小学","卡子街","荟萃中学","第二人民医院","北门","二街","新百大厦","锦天花苑","青山街小区","新市口北","吉和路","王稼祥纪念园","第十一中学","长江中路赭山路","健美小区","弋矶山","健美小区","长盛医院","供水总公司","五一广场西","五一广场东","芜湖站西广场下客点","芜湖站西广场上客点","长途汽车站","联盛广场","神山口南","神山口","段家园","黄山东路二号站","黄山东路一号站","镜湖世纪城"],
+            "29路":["金石新城","九华南路口","清居","八里湾大桥南","陶村","永胜村","外赵村","弋江交警中队","芜湖海螺医院","白马小区","火龙岗中学","火龙岗","二七一大队","围山","公交驾校","高新开发区","九华南路峨山路","马饮","文津东路","弋江嘉园三期","师大附小东校区","弋江嘉园二期东","弋江嘉园二期","弋江嘉园","中建五百米江南春城","烟厂","奥体中心南","弋江区检察院","弋江区政府西","弋江区政府","中江新村","南关","李巷"],
+            "30路":["新兴路停调场","弋江中学","弋江小学","皖新春江明月","瑞丰商博城","瑞东园","大营新村","南瑞新城","奥韵康城","花街","黄山园","卡子街","荟萃中学","芜湖古城","第二人民医院","九华中路","广济寺","赭山公园","五一小区","五一广场西","红梅新村","市文化馆绿影新村","福海家具西","福海家具北","汀棠公园东方蓝海","天和苑"],
+            "31路":["芜湖站西广场上客点","芜湖站西广场下客点","长途汽车站","民生银行芜湖分行","广电中心","人民保险公司","鸠兹广场","中和路","融汇中江广场","盆塘沿","金鹰国际广场","新时代商业街西","利民西路","弋江区政府","中江新村","南关","奥韵康城","南瑞新城","大营新村","瑞东园","瑞丰商博城","皖新春江明月","松韵园","麦德龙","利民东路首末站","利民东路二号站","荆山花园西区","荆山花园东区","荆山公交首末站"],
+            "32路":["港一路公交枢纽","芜湖长江大桥","芜湖科技馆","银湖北路天柱山路","杨家门","景江东方","景观大道西","景观大道东","方特欢乐世界南","莲塘牡丹园","莲塘新村","颐景湾畔","鸠江区政府","市交警支队","钱桥路口","汀棠公园东方蓝海","天和苑","五一广场东","芜湖站西广场下客点","芜湖站西广场上客点","长途汽车站","梅莲路","芜湖站西广场上客点","芜湖站西广场下客点","民生银行芜湖分行","广电中心","人民保险公司","九华中路","荟萃中学","卡子街","黄山园","东外街","马仁山东路口","红花山东路口","仓津路乌霞山东路","雅旭新乐府","弋江嘉园二期","师大附小北","博览中心南","文津小区","马场村","商贸学院","皖医滨江校区北区东门","萃文中学"],
+            "33路":["万春公交停调场","美的精品","万春东路","万春新苑","美的公寓","万春中学","德豪润达","东鑫管业","祠山","水垛","大拐桥","罗阳沟","清水公交停调场","清水河路","北京东路口","清水河中学","清水","清水街道办","春江路口","芜湖盲校","金都西湖大院","清水创业园北","市儿童福利院","扁担河","水岸星城华康医院","新庄","卜家店北","中江大道路口","北京中路","国家广告产业园","安徽工程大学","第五人民医院南","神山口立交桥","曹家山","镜湖小学","人民保险公司","鸠兹广场","鸠江饭店","徽商城"],
+            "34路":["弋矶山北","轮渡路","健美小区","长盛医院","供水总公司","星隆国际城","皖南医学院北","师大附中","凤凰美食街","徽商城","第三中学","荟萃中学","卡子街","北塘小学","小平山","西洋湖","瑞丰商博城东","弋江路马仁山路","瑞丰商博城南","马仁山东路新兴路","新兴路茂家山路","茂家山路","弋江中学","弋江小学","松韵园","麦德龙","江东桥南"],
+            "36路":["浅湾小区","白马山路口","白马山路花津南路","白马山路一号站","济南路白马山路","芜湖南站西","花津南路一号站","强力帆布","奇瑞新能源","电气产业园","天井山路","九华南路峨山路","马饮","文津东路","南塘湖路","师大附小","师大附小北","博览中心南","文津小区","萃文中学","中山南路大工山路","中山南路三号站","长江之歌东","华仑港湾","新时代商业街西","箱子拐","临江桥","冰冻街口","新市口北"],
+            "37路":["高新区公交枢纽","源大管业","强力帆布","奇瑞新能源","高新区软件园","芜湖职院南区南门华夏科技园","芜湖机电学校","澛港新镇","澛港大市场","机电学院西","皖医滨江校区北区南门机电学院北门","商贸学院","马场村","中央城","第十二中学市口腔医院","市中心血站报业集团","弋江区政府西","利民西路","新时代商业街西","箱子拐","临江桥","冰冻街口","新市口东","八佰伴南","师大附中","皖南医学院北","星隆国际城","五一广场西","天和苑","汀棠公园东方蓝海","钱桥路口","市交警支队","十里牌立交桥"],
+            "39A路":["港一路公交枢纽","芜湖科技馆","长江大桥收费站","雍镇","凤城何湾","凤城桃花庄","裕溪","沈南","和谐大道南港河路南","和谐大道长河路北","宝能城小区","宝能城","深圳路","长河北路","江北集中区管委会","郑桥","安康路北","为民服务中心东","安康路口","沈巷镇政府","沈巷公交首末站"],
+            "39B路":["港一路公交枢纽","杨家门","芜湖科技馆","景观大道东","景江东方","长江北路","红旗","长江三桥首末站上客点","芜湖长江三桥","杨坝村","吴越路","新圩路口","杭州路二号站","杭州路一号站","农场社区","雍镇","凤城何湾","凤城桃花庄","裕溪","沈南","和谐大道南港河路南","和谐大道长河路北","宝能城小区","宝能城","深圳路","长河北路","江北集中区管委会","郑桥","安康路北","为民服务中心东","安康路口","沈巷镇政府","沈巷公交首末站"],
+"41/46 路":["南瑞公交首末站","瑞湖南路","南瑞湖东","南瑞湖北","南瑞新城","奥韵康城","南关","奥体中心","弋江区检察院","利民路小学","华仑港湾","银泰城","爱国新村","箱子拐","临江桥","冰冻街口","新市口北","黄山西路","徽商城","第三中学","荟萃中学","卡子街","黄山园","东外街","笆斗街","百蕊山庄","砻坊路口","皖医二附院东","大砻坊","袁泽桥","西洋湖","瑞丰商博城","瑞东园","大营新村","南瑞湖北","南瑞湖西","瑞湖南路","南瑞公交首末站"],
+            "42路":["城东公交枢纽","高速东方御府南","高速东方御府南","赤铸山路梦溪路","市公安局消防支队","方特东方神画水上乐园","方特梦幻王国","第一人民医院","赤铸山路安澜路","赤铸山路海晏路","第一中学","赤铸山路海晏路","赤铸山路河清路","河清路","第一中学","政务中心市民服务中心","时雨景观桥","市博物馆","柏庄观邸","神山路口","城东小区","安徽工程大学北","大学桥北","大学桥南","国家广告产业园","安徽工程大学","第五人民医院南","神山口立交桥","曹家山","镜湖小学","人民保险公司","鸠兹广场","电讯大楼","新市口","大剧院","滨江公园","滨江客运码头","吉和路","新市口北"],
+            "43路":["综保区公交首末站","大圣小区","综合保税区","中达电子公司","芜铁车辆段","凤鸣湖风景区","竹园","凤鸣湖小区","凤鸣湖南路","河塘村","信德华府","信德翡翠湾","晋家楼","莘苑学生公寓","芜湖职院北区北门","齐落山路","石城新村","潜水装备厂北","芜湖宁静医院","杨家门","景江东方","长江北路","红旗","红旗路口","王家巷","梅园小区","田家炳实验中学","福海家具西","市文化馆绿影新村","红梅新村","五一广场西","五一广场东","世纪花园","长途汽车站","芜湖站西广场下客点","芜湖站西广场上客点"],
+            "44路":["碧桂园","安师大二附中","螃蟹矶","大弯子","澛港三区","澛港大桥西","松鼠小镇和平医院北","和平医院东","高新综合服务区","高鑫国际广场","三联锻造","天井山路口","服务外包园","芜湖职院南区南门华夏科技园","花津南路口","峨山东路","马饮","柏庄春暖花开","柏庄丽城","博览中心南","文津小区","中央城","第十二中学市口腔医院","市中心血站报业集团","弋江区政府西","利民西路","新时代商业街西","金鹰国际广场","盆塘沿","融汇中江广场","中和路","鸠江饭店"],
+            "45路":["方特梦幻王国","第一人民医院","赤铸山路安澜路","赤铸山路海晏路","第一中学","赤铸山路海晏路","赤铸山路河清路","河清路","第一中学","政务中心市民服务中心","金浩仁和天地","柏庄香府","神山路河清路","清风路口","城东小区","云从路","云从路北京中路","北京中路","国家广告产业园","安徽工程大学","第五人民医院","神山口南","神山口东","段家园","西洋湖","瑞丰商博城","西干路利民路","西干路红花山路","红花山路西干路","红花山路元塘路","南瑞公交首末站","红花山路","中医药高专","博览中心中医医院","柏庄丽城","文昌东路九华南路","文昌路南塘湖路","文昌路仓津路东","师大附小东校区南门","师大附小东校区"],
+            "47路":["红旗","长江北路","景江东方","景观大道西","景观大道东","银湖北路天柱山路","芜湖科技馆","芜湖长江大桥","芜湖职院北区西门","银湖北路武夷山路","银湖公园","银湖北路裕安路","科创中心","银湖北路港湾路","长春路银湖北路","长春路浦江路","经济开发区","华东玻璃厂","融汇化工","四褐山街道办","龙山西路","褐山花苑二期","远方物流","龙山路","凤鸣湖路龙山路","龙山隧道南","龙山隧道北","汽车电子创业园","奇瑞城北公寓","巢湖路","尖山路泰山路","尖山路嵩山路","巢湖路口","经开区管委会","天门小学","华山路","红星路口","九华北路"],
+            "48路":["保定公交枢纽","五华山路三小路","第四十一中学","小湾","北师大芜湖附校","渡口","三山白马寺","春洲路","黄龙村","临江工业园","集瑞重工二号门","黄垅路口","集瑞联合重工","江南新城","峨溪路二号站","峨溪路一号站","峨溪路口","荆塘垾","三山食品开发区","比华利山庄","三山农贸市场","龙湖花园","三山幸福花城","下马店","三山时代广场","中沟","三山老年大学","中沟粮站","朱湾村","石垾村","芦滩小区","螃蟹矶","大弯子","澛港三区","澛港大桥西","松鼠小镇和平医院北","高新区管委会","澛港大市场","机电学院西","芦花荡公园","文昌西路口","十里江湾公园","乌霞山路口","长江之歌西","马仁山西路口","爱国新村","箱子拐","临江桥","冰冻街口","新市口北","吉和路","王稼祥纪念园","八佰伴","八佰伴南","新市口东"],
+            "49路":["万春公交停调场","清水河路口","万春东路口","祠山路","纬一次路清水河路","纬一次路","美的公寓","纬一次路欧阳湖路","纬一次路新春路","纬一次路梦溪路","万春花园西","鸠江经开区管委会","万春路四号站","万春路五号站","万春路六号站","万春路七号站","万春中路安澜路","南翔万商一号站","新华联梦想城","大阳垾公园东","第一中学西","赤铸山路中江大道","赤铸山路河清路","赤铸山路河清路","政务新区","政务中心市民服务中心"],
+            "50路":["牌坊村","孙家村","湾石路口","九华南路","九华南路","湾石路口","竹丝湖路","竹丝湖路口","义柏","南纬一路口","九华南路口","石硊学校","彩虹桥南","彩虹桥北","杨河路口","白马街道办","杨河路","八里湾大桥南","陶村","永胜村","外赵村","弋江交警中队","芜湖海螺医院","白马小区","善瑞村委会","后杨","朱村","善瑞小学"],
+            "51路":["峨桥公交首末站","经十路北","茶城广场","潘土西","工区","七号桥","伍村路口","李仓村","崔格桥","五贵桥","前骆村","后骆村","程村","柳村","三山经开区管委会","西湖公园西","西湖公园","浮山路","第三十九中学","三山老年大学","中沟粮站","朱湾村","石垾村","芦滩小区","螃蟹矶","大弯子","澛港三区","澛港大桥西","松鼠小镇和平医院北","高新区管委会","澛港新镇","芜湖机电学校","芜湖职院南区南门华夏科技园","高新区软件园","奇瑞新能源","花津南路一号站","芜湖南站西","芜湖南站下客点","芜湖南站上客点"],
+            "52路":["沈巷公交首末站","为民服务中心","人民大道口","沈巷电信局","沈巷村委会","沈巷敬老院","沈巷二小","福州路滨水路","福州路皖兴路","皖兴路福州路","皖兴路深圳路","皖兴路和谐大道","裕铁编组站","朱房","小尹","龙窝","铁桥","裕溪口街道办","裕溪口公园","裕溪口","新三村社区","裕溪口公交首末站"],
+            "53路":["港一路公交枢纽","杨家门","芜湖科技馆","景观大道东","景江东方","长江北路","红旗","长江三桥首末站上客点","芜湖长江三桥","杨坝村","吴越路","龙塘","安徽华谊公司","茶庵","邵窝","田沟","东武小学","天河村委会","杨拐","裕溪闸","裕溪老街","龙窝","铁桥","裕溪口街道办","裕溪口公园","裕溪口","新三村社区","裕溪口公交首末站"],
+            "54路":["芜湖北站","芜湖北站东","芜湖学院西门","中埂张","雍南新街","通江大道雍宁路","雍南商业街","杭州路一号站","新圩路口","吴越路","杨坝村","芜湖长江三桥","长江三桥首末站上客点","第十一中学","八佰伴","凤凰美食街","徽商城","鸠兹广场","鸠江饭店"],
+            "55路":["芜湖北站","苏州路合肥路东","芜湖北站西","通江大道合肥路","板桥村","通江大道六号站","苏州路合肥路西","弋矶山医院江北院区","弋矶山医院江北院区西门","通江大道经一路","通江大道经三路","经三路通江大道","西湾园区东","欣宁门窗","西湾园区管委会","经三路纬一路","香店村","方眺村","刘村","湛杨","陶村","汤沟公交首末站","汤沟新街","汤沟镇政府"],
+            "56路":["芜湖北站","芜湖北站西","通江大道合肥路","板桥村","通江大道六号站","通江大道经一路","通江大道经三路","西湾园区东","欣宁门窗","西湾园区管委会","经三路通江大道","大姚村","通江大道一号站","通江大道二号站","通江大道三号站","三元村","流泗村","通江大道四号站","通江大道五号站","华龙","华龙","尚文学校","金李村部","金带","农业示范园","三利","旭光","竺冰路","江坝新街东","白茆镇政府"],
+            "57路":["芜湖北站","芜湖北站东","芜湖学院西门","中埂张","雍南新街","通江大道雍宁路","雍南商业街","杭州路一号站","杭州路二号站","新圩路口","龙塘","安徽华谊公司","二坝镇政府","二坝长江路","二坝安置小区","二坝中心小学"],
+            "58路":["清水公交停调场","清水河路","北京东路口","清水河中学","清水","清水村","泰文中学","精益公司","清水创业园","军滩口","黄山东路五号站","荆山桥北","安澜路北京中路","安澜路","神山路东","海晏路神山路","海晏路仁和路","中江小学","政务中心市民服务中心","赤铸山路河清路","政务新区"],
+            "59路":["芜湖北站","芜湖北站西","通江大道合肥路","板桥村","通江大道六号站","通江大道经一路","通江大道经三路","西湾园区东","欣宁门窗","西湾园区管委会","经三路通江大道","大姚村","通江大道一号站","通江大道二号站","黄村","楼梯村委会","秀石小学","路老村","七农路口","胡老村","凡拐村","扁埂村","三汊河"],
+            "60路":["盛世家园首末站","盛世家园","良福村","徐北山","师大附小东校区南门","师大附小东校区","弋江嘉园二期东","雅旭新乐府","仓津路乌霞山东路","红花山东路口","南瑞公交首末站","红花山路元塘路","红花山路西干路","瑞丰商博城南","弋江路马仁山路","瑞丰商博城东","瑞丰商博城","瑞东园","大营新村","南瑞新城","奥韵康城","南关","奥体中心","弋江区检察院","弋江区政府西","弋江区政府","中江新村"],
+            "61路":["城泊驾考模拟中心","市车驾管服务中心","香店村","经三路纬一路","经三路通江大道","通江大道经三路","通江大道经一路","西湾园区管委会","欣宁门窗","西湾园区东","通江大道六号站","板桥村","通江大道合肥路","通江大道学苑路","芜湖学院西门","芜湖北站东","学苑路湖州路","楚江大道学苑路","楚江大道和谐大道","楚江大道一号站","楚江大道渡江大道","楚江大道二号站","芜湖长江三桥","长江三桥首末站上客点","五里汀","汀苑路","海创汀海壹品","芜湖站东广场下客点","烈士陵园","芜湖站东广场上客点"],
+            "62路":["芜湖北站","芜湖北站东","芜湖学院西门","中埂张","雍南新街","通江大道雍宁路","雍南商业街","杭州路一号站","杭州路二号站","新圩路口","吴越路","杨坝村","长江三桥首末站上客点","芜湖长江三桥","长江三桥首末站下客点","智算经济产业园","锦绣龙湾","龙湾路嘉兴路","嘉兴路龙湾路","江北宜邻中心","龙泉小区"],
+            "63路":["长江三桥首末站上客点","长江三桥首末站下客点","芜湖长江三桥","汀棠公园东方蓝海","钱桥路口","市交警支队","十里牌立交桥","十里牌","鸠江区法院","祥泰路口","祥泰路万春西路","鸠兹家苑中门","鸠兹家苑南门","鸠兹家苑东","旭日天都东","第二十八中学","涌金路","涌金路中江大道","赤铸山路中江大道","赤铸山路河清路","政务新区","政务中心市民服务中心"],
+            "64路":["浮山路","磨山路奎湖路","创业大街","三山经开区管委会","西湖公园西","浮山路龙湖路","浮山路官河路","浮山路峨桥路","峨桥路","三山幸福花城","龙湖花园","三山农贸市场","比华利山庄","三山食品开发区","荆塘垾","峨溪路口","横山街道","南圩","白象路口","高安中心小学","白象公交首末站"],
+            "65路":["奥体中心","奥体中心","奥体中心下客点","奥体中心南","中医药高专","博览中心中医医院","博览中心南","文津小区","萃文中学","大工山路中山南路","龙湾长江隧道","龙湾路南京路","龙湾路银瓶山路","龙湾路长安大道","嘉兴路龙湾路","江北宜邻中心","东篱路嘉兴路","孝祥路东篱路","上海路孝祥路","上海路楚江大道","长江三桥首末站下客点","长江三桥首末站上客点","智算经济产业园","锦绣龙湾","龙湾路嘉兴路"],
+            "66路":["弋矶山北","轮渡路","健美小区","长江中路赭山路","第十一中学","长江三桥首末站上客点","芜湖长江三桥","楚江大道二号站","楚江大道渡江大道","楚江大道一号站","楚江大道和谐大道","楚江大道学苑路","学苑路湖州路","芜湖北站东","芜湖北站","苏州路合肥路东","苏州路合肥路西","弋矶山医院江北院区","弋矶山医院江北院区西门","板桥村","芜湖北站西"],
+            "88路":["芜湖站东广场上客点","烈士陵园","芜湖站东广场下客点","花塘","长江市场园","赛格电子市场","邮件处理中心","十里牌立交桥","十里牌","金圃花鸟市场","金湾","武夷山路口","三塘","芜铁机务段","二十里","公交集团公司","杨塘湾","芜铁车辆段","中达电子公司","综合保税区师大天门山校区","三十里","衡山路口","小红星","安得物流","奇瑞BOBO城","新里城","泰山路","新泉公司","欧宝机电","华山路口","金鼎锅炉","东梁小区","凤鸣湖路东梁山路","城北公交枢纽","信义特种玻璃西门","信义特种玻璃中门","信义特种玻璃东门"],
+            "101路":["新市口北","新市口","电讯大楼","徽商城","鸠江饭店","凤凰美食街","师大附中","皖南医学院北","星隆国际城","红梅新村","市文化馆绿影新村","福海家具西","大富新村","泰苑小区","莲塘新村","颐景湾畔","鸠江区政府","十里牌立交桥","十里牌","海洋物流","南阳路","清和路口","湾里","机场","月牙路","南阳菜市","汀孟村","南阳村","恒坤汽件公司","鲁李","鲁李社区","长寿源养老中心"],
+"102 路":["南翔万商","南翔万商一号站","新华联梦想城","大阳垾公园东","涌金路中江大道","涌金路","第二十八中学","鸠江北路","神山公园","赤铸山立交东","海创汀海壹品","五里汀","福海家具北","福海家具西","市文化馆绿影新村","红梅新村","供水总公司","长盛医院","长江中路赭山路","第十一中学","吾悦广场","新市口北","新市口东"]
+            },
+            "二": {
+                "1路": ["1", "2", "3"],
+                "2路": ["4", "5", "6"]
+            },
+            "三": {
+                "1路": ["1", "2", "3"],
+                "2路": ["4", "5", "6"]
+            },
+            "四": {
+                "1路": ["1", "2", "3"],
+                "2路": ["4", "5", "6"]
+            },
+            "五": {
+                "1路": ["1", "2", "3"],
+                "2路": ["4", "5", "6"]
+            }
+        };
+
+        // 游戏状态
+        let gameState = {
+            currentCity: "",          // 当前选择的城市
+            selectedLength: 0,        // 选择的站名字数
+            targetStation: "",        // 目标站名
+            targetRoutes: [],         // 目标站所在线路
+            attempts: 0,              // 尝试次数
+            gameOver: false,          // 游戏是否结束
+            currentGuess: "",         // 当前猜测
+            allStations: [],          // 所有站点
+            stationsByLength: {},     // 按长度分组的站点
+            answerVisible: false,     // 答案是否可见
+            routesTableVisible: false,// 线路表是否可见
+            devModeEnabled: false     // 开发者模式是否启用
+        };
+
+        // DOM元素
+        const elements = {
+            // 城市选择
+            citySelection: document.getElementById('citySelection'),
+            citySelectionContainer: document.getElementById('citySelectionContainer'),
+            
+            // 字数选择
+            wordLengthSelection: document.getElementById('wordLengthSelection'),
+            lengthSelection: document.getElementById('lengthSelection'),
+            backToCityBtn: document.getElementById('backToCityBtn'),
+            
+            // 游戏主界面
+            gamePlay: document.getElementById('gamePlay'),
+            gameBoard: document.getElementById('gameBoard'),
+            stationInput: document.getElementById('stationInput'),
+            submitGuess: document.getElementById('submitGuess'),
+            attemptCount: document.getElementById('attemptCount'),
+            giveUpBtn: document.getElementById('giveUpBtn'),
+            backToLengthBtn: document.getElementById('backToLengthBtn'),
+            
+            // 开发者工具
+            devTools: document.querySelector('.dev-tools'),
+            peekAnswerBtn: document.getElementById('peekAnswerBtn'),
+            refreshAnswerBtn: document.getElementById('refreshAnswerBtn'),
+            toggleRoutesBtn: document.getElementById('toggleRoutesBtn'),
+            routesTable: document.getElementById('routesTable'),
+            routesTableBody: document.getElementById('routesTableBody'),
+            answerPreview: document.getElementById('answerPreview'),
+            answerDisplay: document.getElementById('answerDisplay'),
+            routeList: document.getElementById('routeList'),
+            devContent: document.getElementById('devContent'),
+            
+            // 结果弹窗
+            resultModal: document.getElementById('resultModal'),
+            resultTitle: document.getElementById('resultTitle'),
+            resultCity: document.getElementById('resultCity'),
+            correctAnswer: document.getElementById('correctAnswer'),
+            finalAttemptCount: document.getElementById('finalAttemptCount'),
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            changeCityBtn: document.getElementById('changeCityBtn'),
+            changeLengthBtn: document.getElementById('changeLengthBtn'),
+            modalRouteList: document.getElementById('modalRouteList')
+        };
+
+        // 初始化游戏 - 保留开发者模式状态
+        function initGame() {
+            // 保存当前开发者模式状态
+            const wasDevModeEnabled = gameState.devModeEnabled;
+            const wasAnswerVisible = gameState.answerVisible;
+            const wasRoutesTableVisible = gameState.routesTableVisible;
+            
+            // 创建城市选择按钮
+            createCitySelectionButtons();
+            
+            // 显示城市选择界面
+            elements.citySelection.style.display = 'block';
+            elements.wordLengthSelection.style.display = 'none';
+            elements.gamePlay.style.display = 'none';
+            elements.routesTable.style.display = 'none';
+            elements.answerPreview.style.display = 'none';
+            
+            // 恢复开发者模式状态
+            gameState.devModeEnabled = wasDevModeEnabled;
+            gameState.answerVisible = wasAnswerVisible;
+            gameState.routesTableVisible = wasRoutesTableVisible;
+            
+            elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
+            elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
+            elements.routesTable.style.display = gameState.routesTableVisible ? 'table' : 'none';
+            
+            // 重置游戏相关状态
+            gameState.currentCity = "";
+            gameState.selectedLength = 0;
+            gameState.targetStation = "";
+            gameState.targetRoutes = [];
+            gameState.attempts = 0;
+            gameState.gameOver = false;
+            gameState.currentGuess = "";
+            gameState.allStations = [];
+            gameState.stationsByLength = {};
+            
+            // 重置返回按钮状态
+            elements.backToLengthBtn.disabled = false;
+        }
+
+        // 创建城市选择按钮
+        function createCitySelectionButtons() {
+            elements.citySelectionContainer.innerHTML = '';
+            
+            // 遍历所有城市创建按钮
+            for (const city in cityBusData) {
+                const routesCount = Object.keys(cityBusData[city]).length;
+                const button = document.createElement('button');
+                button.className = 'city-btn';
+                button.innerHTML = `${city}<span class="routes-count">${routesCount}条线路</span>`;
+                button.addEventListener('click', () => selectCity(city));
+                elements.citySelectionContainer.appendChild(button);
+            }
+        }
+
+        // 选择城市
+        function selectCity(city) {
+            gameState.currentCity = city;
+            
+            // 收集当前城市的所有站点
+            gameState.allStations = [];
+            const routes = cityBusData[city];
+            for (const route in routes) {
+                gameState.allStations.push(...routes[route]);
+            }
+            
+            // 按站名字数分组
+            gameState.stationsByLength = {};
+            gameState.allStations.forEach(station => {
+                const length = station.length;
+                if (!gameState.stationsByLength[length]) {
+                    gameState.stationsByLength[length] = [];
+                }
+                if (!gameState.stationsByLength[length].includes(station)) {
+                    gameState.stationsByLength[length].push(station);
+                }
+            });
+            
+            // 创建字数选择按钮
+            elements.lengthSelection.innerHTML = '';
+            const lengths = Object.keys(gameState.stationsByLength).map(Number).sort((a, b) => a - b);
+            lengths.forEach(length => {
+                const count = gameState.stationsByLength[length].length;
+                const button = document.createElement('button');
+                button.className = 'length-btn';
+                button.innerHTML = `${length}<span class="count">${count}个站点</span>`;
+                button.addEventListener('click', () => selectWordLength(length));
+                elements.lengthSelection.appendChild(button);
+            });
+            
+            // 切换到字数选择界面
+            elements.citySelection.style.display = 'none';
+            elements.wordLengthSelection.style.display = 'block';
+        }
+
+        // 选择站名字数
+        function selectWordLength(length) {
+            gameState.selectedLength = length;
+            gameState.attempts = 0;
+            gameState.gameOver = false;
+            
+            // 随机选择一个目标站名
+            selectRandomTarget();
+            
+            // 创建游戏板 - 初始只有1个空行
+            createGameBoard();
+            
+            // 更新UI
+            elements.attemptCount.textContent = gameState.attempts;
+            elements.wordLengthSelection.style.display = 'none';
+            elements.gamePlay.style.display = 'block';
+            elements.routesTable.style.display = gameState.routesTableVisible ? 'table' : 'none';
+            elements.stationInput.value = '';
+            
+            // 更新答案预览
+            updateAnswerPreview();
+            
+            // 自动聚焦输入框
+            setTimeout(() => {
+                elements.stationInput.focus();
+            }, 300);
+            
+            // 确保返回按钮可用
+            elements.backToLengthBtn.disabled = false;
+            
+            // 如果开发者模式已启用，显示工具内容
+            if (gameState.devModeEnabled) {
+                elements.devContent.style.display = 'block';
+            }
+            
+            // 如果线路表应该显示，刷新它
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+        }
+
+        // 随机选择目标站名
+        function selectRandomTarget() {
+            const stations = gameState.stationsByLength[gameState.selectedLength];
+            if (stations && stations.length > 0) {
+                gameState.targetStation = stations[Math.floor(Math.random() * stations.length)];
+                
+                // 查找目标站名所在的所有线路
+                gameState.targetRoutes = [];
+                const cityRoutes = cityBusData[gameState.currentCity];
+                for (const route in cityRoutes) {
+                    if (cityRoutes[route].includes(gameState.targetStation)) {
+                        gameState.targetRoutes.push(route);
+                    }
+                }
+                
+                // 刷新线路表
+                if (gameState.routesTableVisible) {
+                    showRoutesTable();
+                }
+            }
+        }
+
+        // 创建游戏板 - 初始只有1个空行
+        function createGameBoard() {
+            elements.gameBoard.innerHTML = '';
+            addEmptyRow();
+        }
+        
+        // 添加一个空行
+        function addEmptyRow() {
+            const row = document.createElement('div');
+            row.className = 'guess-row empty-row';
+            
+            for (let j = 0; j < gameState.selectedLength; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'guess-cell';
+                row.appendChild(cell);
+            }
+            
+            elements.gameBoard.appendChild(row);
+        }
+
+        // 提交猜测
+        function submitGuess() {
+            if (gameState.gameOver) return;
+            
+            const guess = elements.stationInput.value.trim();
+            if (!guess) return;
+            
+            // 检查是否输入了暗号"鬼狐王"来切换开发者模式
+            if (guess === "鬼狐王") {
+                toggleDevMode();
+                elements.stationInput.value  = '';
+                return;
+            }
+            
+            // 验证输入
+            if (guess.length !== gameState.selectedLength) {
+                alert(`请输入${gameState.selectedLength}个字的站名！`);
+                return;
+            }
+            
+            if (!gameState.allStations.includes(guess)) {
+                alert("该站名不存在，请重新输入！");
+                return;
+            }
+            
+            // 增加尝试次数
+            gameState.attempts++;
+            elements.attemptCount.textContent = gameState.attempts;
+            
+            // 显示猜测结果
+            displayGuessResult(guess);
+            
+            // 检查游戏是否结束
+            checkGameEnd(guess);
+            
+            // 清空输入框
+            elements.stationInput.value = '';
+            
+            // 第一次猜测后禁用返回按钮
+            if (gameState.attempts === 1) {
+                elements.backToLengthBtn.disabled = true;
+            }
+            
+            // 滚动到最新一行
+            scrollToLatestRow();
+        }
+        
+        // 切换开发者模式
+        function toggleDevMode() {
+            gameState.devModeEnabled = !gameState.devModeEnabled;
+            elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
+            
+            // 当开发者模式启用时，确保工具内容显示
+            if (gameState.devModeEnabled) {
+                elements.devContent.style.display = 'block';
+            } else {
+                // 关闭时隐藏工具内容
+                elements.devContent.style.display = 'none';
+            }
+        }
+        
+        // 滚动到最新一行
+        function scrollToLatestRow() {
+            const container = document.querySelector('.game-board-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        // 显示猜测结果
+        function displayGuessResult(guess) {
+            const target = gameState.targetStation;
+            
+            // 获取当前行（最后一行是空行）
+            const rows = elements.gameBoard.children;
+            const currentRow = rows[rows.length - 1];
+            
+            // 检查是否在同一条线路上
+            let sameLine = false;
+            const cityRoutes = cityBusData[gameState.currentCity];
+            for (const route in cityRoutes) {
+                if (cityRoutes[route].includes(guess) && cityRoutes[route].includes(target)) {
+                    sameLine = true;
+                    break;
+                }
+            }
+            
+            // 创建字符状态数组
+            const charStatus = Array(gameState.selectedLength).fill('absent');
+            const targetChars = target.split('');
+            const guessChars = guess.split('');
+            
+            // 首先标记正确位置
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                if (guessChars[i] === targetChars[i]) {
+                    charStatus[i] = 'correct';
+                    targetChars[i] = null; // 标记为已匹配
+                }
+            }
+            
+            // 然后标记存在但位置错误的字符
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                if (charStatus[i] === 'correct') continue;
+                
+                const index = targetChars.indexOf(guessChars[i]);
+                if (index !== -1) {
+                    charStatus[i] = 'present';
+                    targetChars[index] = null; // 标记为已匹配
+                }
+            }
+            
+            // 更新单元格状态
+            currentRow.classList.remove('empty-row');
+            const cells = currentRow.children;
+            
+            // 确保有足够的单元格
+            while (cells.length < gameState.selectedLength) {
+                const cell = document.createElement('div');
+                cell.className = 'guess-cell';
+                currentRow.appendChild(cell);
+            }
+            
+            // 应用状态和文字
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                cells[i].textContent = guessChars[i];
+                cells[i].className = `guess-cell ${charStatus[i]}`;
+                
+                // 如果同一条线路，添加额外样式
+                if (sameLine) {
+                    cells[i].classList.add('same-line');
+                }
+            }
+            
+            // 游戏未结束时，添加一个新的空行
+            if (!gameState.gameOver) {
+                addEmptyRow();
+            }
+        }
+
+        // 检查游戏是否结束
+        function checkGameEnd(guess) {
+            if (guess === gameState.targetStation) {
+                // 玩家猜对了
+                gameState.gameOver = true;
+                showResultModal(true);
+            }
+        }
+
+        // 显示结果弹窗
+        function showResultModal(isWin) {
+            if (isWin) {
+                elements.resultTitle.innerHTML = '<i class="fas fa-trophy"></i> 恭喜你猜对了！';
+            } else {
+                elements.resultTitle.innerHTML = '<i class="fas fa-flag"></i> 游戏结束';
+            }
+            
+            elements.resultCity.textContent = gameState.currentCity;
+            elements.correctAnswer.textContent = gameState.targetStation;
+            
+            // 显示所有线路
+            elements.modalRouteList.innerHTML = '';
+            gameState.targetRoutes.forEach(route => {
+                const routeTag = document.createElement('span');
+                routeTag.className = 'route-tag';
+                routeTag.innerHTML = `<i class="fas fa-bus"></i> ${route}`;
+                elements.modalRouteList.appendChild(routeTag);
+            });
+            
+            elements.finalAttemptCount.textContent = gameState.attempts;
+            
+            elements.resultModal.style.display = 'flex';
+        }
+
+        // 开发者工具：偷看答案
+        function peekAnswer() {
+            gameState.answerVisible = !gameState.answerVisible;
+            updateAnswerPreview();
+            
+            // 刷新线路表
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+        }
+
+        // 更新答案预览
+        function updateAnswerPreview() {
+            if (gameState.selectedLength > 0) {
+                elements.answerDisplay.textContent = gameState.targetStation;
+                
+                // 生成线路标签
+                elements.routeList.innerHTML = '';
+                gameState.targetRoutes.forEach(route => {
+                    const routeTag = document.createElement('span');
+                    routeTag.className = 'route-tag';
+                    routeTag.innerHTML = `<i class="fas fa-bus"></i> ${route}`;
+                    elements.routeList.appendChild(routeTag);
+                });
+            } else {
+                elements.answerDisplay.textContent = "未选择";
+                elements.routeList.innerHTML = '';
+            }
+            
+            elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
+        }
+
+        // 开发者工具：刷新谜底
+        function refreshAnswer() {
+            selectRandomTarget();
+            resetCurrentGame();
+            updateAnswerPreview();
+            
+            // 刷新线路表
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+        }
+
+        // 开发者工具：切换线路表显示
+        function toggleRoutesTable() {
+            if (gameState.routesTableVisible) {
+                elements.routesTable.style.display = 'none';
+                gameState.routesTableVisible = false;
+            } else {
+                showRoutesTable();
+            }
+        }
+        
+        // 开发者工具：显示线路表
+        function showRoutesTable() {
+            elements.routesTableBody.innerHTML = '';
+            const cityRoutes = cityBusData[gameState.currentCity];
+            
+            for (const route in cityRoutes) {
+                const row = document.createElement('tr');
+                
+                const routeCell = document.createElement('td');
+                routeCell.innerHTML = `<i class="fas fa-bus bus-icon"></i> ${route}`;
+                routeCell.style.fontWeight = 'bold';
+                routeCell.style.color = '#3498db';
+                
+                const stationsCell = document.createElement('td');
+                cityRoutes[route].forEach(station => {
+                    const tag = document.createElement('span');
+                    tag.className = 'station-tag';
+                    tag.textContent = station;
+                    
+                    // 添加点击事件
+                    tag.addEventListener('click', () => selectStationAsTarget(station));
+                    
+                    // 仅在显示答案时标记当前谜底站名
+                    if (station === gameState.targetStation && gameState.answerVisible) {
+                        tag.style.background = 'rgba(46, 204, 113, 0.4)';
+                        tag.style.fontWeight = 'bold';
+                    }
+                    
+                    stationsCell.appendChild(tag);
+                });
+                
+                row.appendChild(routeCell);
+                row.appendChild(stationsCell);
+                elements.routesTableBody.appendChild(row);
+            }
+            
+            elements.routesTable.style.display = 'table';
+            gameState.routesTableVisible = true;
+        }
+
+        // 选择站点作为新目标
+        function selectStationAsTarget(station) {
+            // 获取该站点的长度
+            const stationLength = station.length;
+            
+            // 如果长度与当前选择的不同，则切换到该长度模式
+            if (stationLength !== gameState.selectedLength) {
+                gameState.selectedLength = stationLength;
+            }
+            
+            // 设置新目标
+            gameState.targetStation = station;
+            
+            // 查找该站点所在的所有线路
+            gameState.targetRoutes = [];
+            const cityRoutes = cityBusData[gameState.currentCity];
+            for (const route in cityRoutes) {
+                if (cityRoutes[route].includes(station)) {
+                    gameState.targetRoutes.push(route);
+                }
+            }
+            
+            // 重置游戏
+            resetCurrentGame();
+            
+            // 更新答案预览
+            updateAnswerPreview();
+            
+            // 刷新线路表
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+            
+            // 显示提示
+            alert(`已切换谜底为：${station}`);
+        }
+
+        // 重置当前游戏
+        function resetCurrentGame() {
+            gameState.attempts = 0;
+            gameState.gameOver = false;
+            elements.attemptCount.textContent = gameState.attempts;
+            createGameBoard(); // 重新创建游戏板，只有1个空行
+            elements.stationInput.value = '';
+            
+            // 重置返回按钮状态
+            elements.backToLengthBtn.disabled = false;
+        }
+
+        // 认输
+        function giveUp() {
+            gameState.gameOver = true;
+            showResultModal(false);
+        }
+
+        // 再来一局
+        function playAgain() {
+            elements.resultModal.style.display = 'none';
+            selectRandomTarget(); // 重新选择谜底
+            resetCurrentGame();
+            updateAnswerPreview();
+            
+            // 刷新线路表
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+        }
+        
+        // 更换城市
+        function changeCity() {
+            elements.resultModal.style.display = 'none';
+            initGame();
+        }
+        
+        // 选择其他字数
+        function changeLength() {
+            elements.resultModal.style.display = 'none';
+            elements.gamePlay.style.display = 'none';
+            elements.wordLengthSelection.style.display = 'block';
+        }
+        
+        // 返回城市选择
+        function backToCitySelection() {
+            elements.wordLengthSelection.style.display = 'none';
+            elements.citySelection.style.display = 'block';
+        }
+        
+        // 返回字数选择
+        function backToLengthSelection() {
+            elements.gamePlay.style.display = 'none';
+            elements.wordLengthSelection.style.display = 'block';
+        }
+
+        // 事件监听
+        elements.submitGuess.addEventListener('click', submitGuess);
+        elements.stationInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') submitGuess();
+        });
+        
+        elements.peekAnswerBtn.addEventListener('click', peekAnswer);
+        elements.refreshAnswerBtn.addEventListener('click', refreshAnswer);
+        elements.toggleRoutesBtn.addEventListener('click', toggleRoutesTable);
+        
+        elements.playAgainBtn.addEventListener('click', playAgain);
+        elements.changeCityBtn.addEventListener('click', changeCity);
+        elements.changeLengthBtn.addEventListener('click', changeLength);
+        
+        elements.giveUpBtn.addEventListener('click', giveUp);
+        
+        // 返回按钮事件
+        elements.backToCityBtn.addEventListener('click', backToCitySelection);
+        elements.backToLengthBtn.addEventListener('click', backToLengthSelection);
+
+        // 初始化游戏
+        window.onload = initGame;
+    </script>
+</body>
+</html>
