@@ -983,7 +983,8 @@
             "66路":["弋矶山北","轮渡路","健美小区","长江中路赭山路","第十一中学","长江三桥首末站上客点","芜湖长江三桥","楚江大道二号站","楚江大道渡江大道","楚江大道一号站","楚江大道和谐大道","楚江大道学苑路","学苑路湖州路","芜湖北站东","芜湖北站","苏州路合肥路东","苏州路合肥路西","弋矶山医院江北院区","弋矶山医院江北院区西门","板桥村","芜湖北站西"],
             "88路":["芜湖站东广场上客点","烈士陵园","芜湖站东广场下客点","花塘","长江市场园","赛格电子市场","邮件处理中心","十里牌立交桥","十里牌","金圃花鸟市场","金湾","武夷山路口","三塘","芜铁机务段","二十里","公交集团公司","杨塘湾","芜铁车辆段","中达电子公司","综合保税区师大天门山校区","三十里","衡山路口","小红星","安得物流","奇瑞BOBO城","新里城","泰山路","新泉公司","欧宝机电","华山路口","金鼎锅炉","东梁小区","凤鸣湖路东梁山路","城北公交枢纽","信义特种玻璃西门","信义特种玻璃中门","信义特种玻璃东门"],
             "101路":["新市口北","新市口","电讯大楼","徽商城","鸠江饭店","凤凰美食街","师大附中","皖南医学院北","星隆国际城","红梅新村","市文化馆绿影新村","福海家具西","大富新村","泰苑小区","莲塘新村","颐景湾畔","鸠江区政府","十里牌立交桥","十里牌","海洋物流","南阳路","清和路口","湾里","机场","月牙路","南阳菜市","汀孟村","南阳村","恒坤汽件公司","鲁李","鲁李社区","长寿源养老中心"],
-"102 路":["南翔万商","南翔万商一号站","新华联梦想城","大阳垾公园东","涌金路中江大道","涌金路","第二十八中学","鸠江北路","神山公园","赤铸山立交东","海创汀海壹品","五里汀","福海家具北","福海家具西","市文化馆绿影新村","红梅新村","供水总公司","长盛医院","长江中路赭山路","第十一中学","吾悦广场","新市口北","新市口东"]
+"102 路":["南翔万商","南翔万商一号站","新华联梦想城","大阳垾公园东","涌金路中江大道","涌金路","第二十八中学","鸠江北路","神山公园","赤铸山立交东","海创汀海壹品","五里汀","福海家具北","福海家具西","市文化馆绿影新村","红梅新村","供水总公司","长盛医院","长江中路赭山路","第十一中学","吾悦广场","新市口北","新市口东"],
+
 
             },
             "二": {
@@ -1004,7 +1005,7 @@
             }
         };
 
-        // 游戏状态
+        // 游戏状态 - 保存开发者模式的状态
         let gameState = {
             currentCity: "",          // 当前选择的城市
             selectedLength: 0,        // 选择的站名字数
@@ -1087,8 +1088,6 @@
             gameState.routesTableVisible = wasRoutesTableVisible;
             
             elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
-            elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
-            elements.routesTable.style.display = gameState.routesTableVisible ? 'table' : 'none';
             
             // 重置游戏相关状态
             gameState.currentCity = "";
@@ -1176,7 +1175,6 @@
             elements.attemptCount.textContent = gameState.attempts;
             elements.wordLengthSelection.style.display = 'none';
             elements.gamePlay.style.display = 'block';
-            elements.routesTable.style.display = gameState.routesTableVisible ? 'table' : 'none';
             elements.stationInput.value = '';
             
             // 更新答案预览
@@ -1193,11 +1191,18 @@
             // 如果开发者模式已启用，显示工具内容
             if (gameState.devModeEnabled) {
                 elements.devContent.style.display = 'block';
-            }
-            
-            // 如果线路表应该显示，刷新它
-            if (gameState.routesTableVisible) {
-                showRoutesTable();
+                elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
+                
+                // 恢复线路表状态
+                if (gameState.routesTableVisible) {
+                    showRoutesTable();
+                } else {
+                    elements.routesTable.style.display = 'none';
+                }
+            } else {
+                elements.devContent.style.display = 'none';
+                elements.answerPreview.style.display = 'none';
+                elements.routesTable.style.display = 'none';
             }
         }
 
@@ -1217,7 +1222,7 @@
                 }
                 
                 // 刷新线路表
-                if (gameState.routesTableVisible) {
+                if (gameState.devModeEnabled && gameState.routesTableVisible) {
                     showRoutesTable();
                 }
             }
@@ -1290,21 +1295,26 @@
             scrollToLatestRow();
         }
         
-        // 切换开发者模式
+        // 切换开发者模式 - 保留状态
         function toggleDevMode() {
             gameState.devModeEnabled = !gameState.devModeEnabled;
             elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
             
-            // 当开发者模式启用时，根据之前的状态显示/隐藏线路表和答案预览
             if (gameState.devModeEnabled) {
                 elements.devContent.style.display = 'block';
                 elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
-                elements.routesTable.style.display = gameState.routesTableVisible ? 'table' : 'none';
+                
+                // 恢复线路表状态
+                if (gameState.routesTableVisible) {
+                    showRoutesTable();
+                } else {
+                    elements.routesTable.style.display = 'none';
+                }
             } else {
-                // 关闭时隐藏工具内容、线路表和答案预览，但保留它们的状态
                 elements.devContent.style.display = 'none';
                 elements.answerPreview.style.display = 'none';
                 elements.routesTable.style.display = 'none';
+                // 不重置answerVisible和routesTableVisible状态
             }
         }
         
@@ -1424,11 +1434,6 @@
         function peekAnswer() {
             gameState.answerVisible = !gameState.answerVisible;
             updateAnswerPreview();
-            
-            // 刷新线路表
-            if (gameState.routesTableVisible) {
-                showRoutesTable();
-            }
         }
 
         // 更新答案预览
@@ -1449,7 +1454,7 @@
                 elements.routeList.innerHTML = '';
             }
             
-            elements.answerPreview.style.display = gameState.answerVisible ? 'block' : 'none';
+            elements.answerPreview.style.display = (gameState.devModeEnabled && gameState.answerVisible) ? 'block' : 'none';
         }
 
         // 开发者工具：刷新谜底
@@ -1457,20 +1462,16 @@
             selectRandomTarget();
             resetCurrentGame();
             updateAnswerPreview();
-            
-            // 刷新线路表
-            if (gameState.routesTableVisible) {
-                showRoutesTable();
-            }
         }
 
         // 开发者工具：切换线路表显示
         function toggleRoutesTable() {
+            gameState.routesTableVisible = !gameState.routesTableVisible;
+            
             if (gameState.routesTableVisible) {
-                elements.routesTable.style.display = 'none';
-                gameState.routesTableVisible = false;
-            } else {
                 showRoutesTable();
+            } else {
+                elements.routesTable.style.display = 'none';
             }
         }
         
@@ -1511,7 +1512,6 @@
             }
             
             elements.routesTable.style.display = 'table';
-            gameState.routesTableVisible = true;
         }
 
         // 选择站点作为新目标
@@ -1546,9 +1546,6 @@
             if (gameState.routesTableVisible) {
                 showRoutesTable();
             }
-            
-            // 显示提示
-            alert(`已切换谜底为：${station}`);
         }
 
         // 重置当前游戏
@@ -1576,9 +1573,11 @@
             resetCurrentGame();
             updateAnswerPreview();
             
-            // 刷新线路表
-            if (gameState.routesTableVisible) {
+            // 仅在开发者模式开启且线路表可见时才显示
+            if (gameState.devModeEnabled && gameState.routesTableVisible) {
                 showRoutesTable();
+            } else {
+                elements.routesTable.style.display = 'none';
             }
         }
         
