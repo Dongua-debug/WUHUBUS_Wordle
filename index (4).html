@@ -28,6 +28,7 @@
         .container {
             width: 100%;
             max-width: 900px;
+            max-width: 900px;
             background: rgba(0, 0, 0, 0.75);
             border-radius: 15px;
             overflow: hidden;
@@ -595,13 +596,6 @@
             border-radius: 4px;
             margin: 2px;
             font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .route-tag:hover {
-            background: rgba(155, 89, 182, 0.5);
-            transform: scale(1.05);
         }
         
         .attempts-counter {
@@ -739,17 +733,6 @@
         .modal-minimize-btn:hover {
             transform: scale(1.1);
             background: #2980b9;
-        }
-        
-        /* 高亮行 */
-        .highlighted-row {
-            animation: highlight 2s ease;
-        }
-        
-        @keyframes highlight {
-            0% { background-color: rgba(155, 89, 182, 0.7); }
-            70% { background-color: rgba(155, 89, 182, 0.3); }
-            100% { background-color: transparent; }
         }
         
         @media (max-width: 600px) {
@@ -1526,8 +1509,7 @@
 "615":["鸠兹家苑","鸠兹创业街","鸠兹家苑中门","上陶路","长江市场园","崇文学校北门","崇文学校西门","五里汀","海创汀海壹品","海创汀海壹品","五里汀","福海家具北","福海家具西","市文化馆绿影新村","红梅新村","五一广场西","五一广场东","世纪花园","长途汽车站","芜湖站西广场下客点","芜湖站西广场上客点"],
 "620":["镜湖世纪城","黄山东路一号站","棠梅小学","绿洲路神棠路","绿洲路红杨路","绿洲路鸠江南路","绿洲路黄山东路","第二十七中分校","云从路北京中路","云从路","鸠兹小学","天池路神山路","师大附外城东校区东门","师大附外城东校区北门","云从路仁和路","云从路政通路","云从路赤铸山路","赤铸山路云从路","新塘","涌金路中江大道","涌金路","第二十八中学","鸠江北路","赤铸山路鸠江北路"],
 "625":["政务新区","海晏路仁和路","海晏路神山路","神山路东","神山路河清路","柏庄香府","金浩仁和天地","政务中心市民服务中心","赤铸山路河清路","赤铸山路中江大道","第一中学西","大阳垾公园东","新华联梦想城","南翔万商一号站","飞翔路口","官飞社区","上海湾","东部飞阳物流园"],
-"628":["芜湖站西广场上客点","芜湖站西广场下客点","长途汽车站","民生银行芜湖分行","广电中心","镜湖小学","红光路北京中路","红光路宣春路","宣春路红光路","仓津路宣春路","曹家山","迎秀街宣春路","仓津路黄山东路","黄山园","东外街","笆斗街","金马门","花街"],
-            }
+"628":["芜湖站西广场上客点","芜湖站西广场下客点","长途汽车站","民生银行芜湖分行","广电中心","镜湖小学","红光路北京中路","红光路宣春路","宣春路红光路","仓津路宣春路","曹家山","迎秀街宣春路","仓津路黄山东路","黄山园","东外街","笆斗街","金马门","花街"],            }
         };
 
         // 游戏状态
@@ -1709,8 +1691,8 @@
             elements.wordLengthSelection.style.display = 'block';
         }
 
-        // 选择站名字数 - 新增参数targetStation，用于指定目标站点
-        function selectWordLength(length, targetStation = null) {
+        // 选择站名字数
+        function selectWordLength(length) {
             gameState.selectedLength = length;
             gameState.attempts = 0;
             gameState.gameOver = false;
@@ -1720,22 +1702,8 @@
             gameState.cheatUsedInGame = gameState.devModeEnabled;
             gameState.finalCheatState = false;
 
-            // 如果提供了目标站点，则使用它，否则随机选择
-            if (targetStation && targetStation.length === length) {
-                gameState.targetStation = targetStation;
-                
-                // 查找目标站名所在的所有线路
-                gameState.targetRoutes = [];
-                const cityRoutes = cityBusData[gameState.currentCity];
-                for (const route in cityRoutes) {
-                    if (cityRoutes[route].includes(gameState.targetStation)) {
-                        gameState.targetRoutes.push(route);
-                    }
-                }
-            } else {
-                // 随机选择一个目标站名
-                selectRandomTarget();
-            }
+            // 随机选择一个目标站名
+            selectRandomTarget();
 
             // 创建游戏板
             createGameBoard();
@@ -2079,51 +2047,23 @@
             if (gameState.answerVisible) {
                 elements.answerDisplay.textContent = gameState.targetStation;
                 
-                // 更新线路列表
+                // 更新线路列表（只显示数字）
                 elements.routeList.innerHTML = '';
                 gameState.targetRoutes.forEach(route => {
                     const routeTag = document.createElement('span');
                     routeTag.className = 'route-tag';
-                    routeTag.textContent = route;
-                    routeTag.dataset.route = route; // 添加数据属性存储线路号
-                    
-                    // 添加点击事件：跳转到线路表对应行
-                    routeTag.addEventListener('click', function() {
-                        // 如果线路表不可见，直接返回
-                        if (!gameState.routesTableVisible) {
-                            return;
-                        }
-                        
-                        // 查找对应线路的行
-                        const rows = elements.routesTableBody.querySelectorAll('tr');
-                        for (let row of rows) {
-                            const routeCell = row.querySelector('td:first-child');
-                            if (routeCell && routeCell.textContent === route) {
-                                // 滚动到该行
-                                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                
-                                // 添加高亮效果
-                                row.classList.add('highlighted-row');
-                                
-                                // 2秒后移除高亮类
-                                setTimeout(() => {
-                                    row.classList.remove('highlighted-row');
-                                }, 2000);
-                                break;
-                            }
-                        }
-                    });
-                    
+                    routeTag.textContent = route; // 只显示数字，不显示"线路"二字
                     elements.routeList.appendChild(routeTag);
                 });
                 
                 elements.answerPreview.style.display = 'block';
             } else {
+                // 完全隐藏整个答案预览框
                 elements.answerPreview.style.display = 'none';
             }
         }
 
-        // 显示线路表
+        // 显示线路表（只显示数字）
         function showRoutesTable() {
             elements.routesTableBody.innerHTML = '';
             const cityRoutes = cityBusData[gameState.currentCity];
@@ -2169,13 +2109,27 @@
                             const wasAnswerVisible = gameState.answerVisible;
                             const wasRoutesTableVisible = gameState.routesTableVisible;
                             
-                            // 选择新的字数，传入目标站点
-                            selectWordLength(newLength, station);
+                            // 选择新的字数，这会重新初始化游戏
+                            gameState.selectedLength = newLength;
                             
                             // 恢复开发者模式状态
                             gameState.devModeEnabled = wasDevModeEnabled;
                             gameState.answerVisible = wasAnswerVisible;
                             gameState.routesTableVisible = wasRoutesTableVisible;
+                            
+                            // 选择新的目标站点
+                            gameState.targetStation = station;
+                            
+                            // 更新目标线路
+                            gameState.targetRoutes = [];
+                            for (const r in cityBusData[gameState.currentCity]) {
+                                if (cityBusData[gameState.currentCity][r].includes(station)) {
+                                    gameState.targetRoutes.push(r);
+                                }
+                            }
+                            
+                            // 重新初始化游戏
+                            selectWordLength(newLength);
                             
                             // 如果之前答案是可见的，保持可见
                             if (wasAnswerVisible) {
@@ -2345,3 +2299,4 @@
     </script>
 </body>
 </html>
+    
