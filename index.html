@@ -84,20 +84,19 @@
         }
         
         .city-selection {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
             margin: 25px 0;
         }
         
         .city-btn {
-            padding: 20px 30px;
-            border-radius: 12px;
+            padding: 15px 10px;
+            border-radius: 10px;
             border: none;
             background: #3498db;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.0rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -108,7 +107,9 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
-            min-width: 150px;
+            min-width: 0;
+            text-align: center;
+            height: 100%;
         }
         
         .city-btn:after {
@@ -134,28 +135,27 @@
         }
         
         .city-btn .routes-count {
-            font-size: 0.8rem;
-            margin-top: 8px;
+            font-size: 0.75rem;
+            margin-top: 6px;
             font-weight: normal;
             z-index: 2;
         }
         
         .length-selection {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 12px;
             margin: 25px 0;
         }
         
         .length-btn {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             border: none;
             background: #3498db;
             color: white;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -166,6 +166,7 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
+            margin: 0 auto;
         }
         
         .length-btn:after {
@@ -191,7 +192,7 @@
         }
         
         .length-btn .count {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             margin-top: 4px;
             font-weight: normal;
             z-index: 2;
@@ -752,6 +753,7 @@
             100% { background-color: transparent; }
         }
         
+        /* 移动设备优化 - 主要修改部分 */
         @media (max-width: 600px) {
             .container {
                 padding: 12px;
@@ -761,80 +763,129 @@
                 font-size: 1.7rem;
                 gap: 10px;
             }
-        
+            
+            /* 城市选择按钮优化 */
+            .city-selection {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            
+            .city-btn {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+                min-width: 90px;
+            }
+            
+            .city-btn .routes-count {
+                font-size: 0.7rem;
+                margin-top: 4px;
+            }
+            
+            /* 字数选择按钮优化 */
+            .length-selection {
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+                gap: 10px;
+            }
+            
+            .length-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.4rem;
+            }
+            
+            .length-btn .count {
+                font-size: 0.6rem;
+            }
+            
+            /* 游戏板单元格优化 */
             .guess-cell {
-                width: 48px;
-                height: 48px;
-                font-size: 1.6rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.4rem;
             }
-        
-            .length-btn, .city-btn {
-                width: 70px;
-                height: 70px;
-                font-size: 1.6rem;
-            }
-        
+            
+            /* 输入区域优化 */
             .input-area {
                 flex-direction: column;
                 align-items: center;
+                gap: 8px;
             }
-        
-            .modal-buttons, .game-controls, .dev-buttons {
-                flex-direction: column;
+            
+            #stationInput {
+                width: 100%;
+                font-size: 1.0rem;
+                padding: 12px 15px;
             }
-        
+            
             button {
                 width: 100%;
+                padding: 10px;
+                font-size: 0.9rem;
             }
-        
+            
+            /* 开发者工具优化 */
+            .dev-buttons {
+                gap: 8px;
+            }
+            
+            .dev-btn {
+                min-width: 100%;
+                min-height: 60px;
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
             .dev-header {
                 flex-direction: column;
                 gap: 10px;
                 align-items: stretch;
             }
-        
+            
             .dev-title {
                 font-size: 1rem;
                 flex-direction: column;
             }
-        
-            .dev-buttons {
-                gap: 8px;
-            }
-        
-            .dev-btn {
-                padding: 16px;
-                font-size: 0.9rem;
-                min-width: 100%;
-                min-height: 60px;
-            }
-        
+            
+            /* 结果弹窗优化 */
             .modal-content {
                 padding: 20px;
             }
-        
+            
             .modal-title {
                 font-size: 1.5rem;
             }
-        
+            
+            .modal-stats {
+                font-size: 1.0rem;
+                padding: 12px;
+            }
+            
+            .modal-buttons, .game-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .back-btn {
+                width: 100%;
+                max-width: 200px;
+                padding: 10px;
+            }
+            
+            /* 其他元素优化 */
             .dev-tools {
                 margin-top: 15px;
                 padding: 12px;
             }
-        
+            
             .dev-title h3 {
                 margin: 8px 0;
             }
-        
-            .dev-content {
-                position: relative;
-                z-index: 20;
-            }
-        
+            
             .answer-preview {
                 padding: 10px;
+                font-size: 1.0rem;
             }
-        
+            
             .game-section {
                 padding-bottom: 20px;
             }
@@ -849,11 +900,11 @@
             .game-board-container {
                 max-height: 35vh;
             }
-        
+            
             .guess-cell {
-                width: 40px;
-                height: 40px;
-                font-size: 1.4rem;
+                width: 35px;
+                height: 35px;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -1527,6 +1578,7 @@
 "620":["镜湖世纪城","黄山东路一号站","棠梅小学","绿洲路神棠路","绿洲路红杨路","绿洲路鸠江南路","绿洲路黄山东路","第二十七中分校","云从路北京中路","云从路","鸠兹小学","天池路神山路","师大附外城东校区东门","师大附外城东校区北门","云从路仁和路","云从路政通路","云从路赤铸山路","赤铸山路云从路","新塘","涌金路中江大道","涌金路","第二十八中学","鸠江北路","赤铸山路鸠江北路"],
 "625":["政务新区","海晏路仁和路","海晏路神山路","神山路东","神山路河清路","柏庄香府","金浩仁和天地","政务中心市民服务中心","赤铸山路河清路","赤铸山路中江大道","第一中学西","大阳垾公园东","新华联梦想城","南翔万商一号站","飞翔路口","官飞社区","上海湾","东部飞阳物流园"],
 "628":["芜湖站西广场上客点","芜湖站西广场下客点","长途汽车站","民生银行芜湖分行","广电中心","镜湖小学","红光路北京中路","红光路宣春路","宣春路红光路","仓津路宣春路","曹家山","迎秀街宣春路","仓津路黄山东路","黄山园","东外街","笆斗街","金马门","花街"],
+
             }
         };
 
