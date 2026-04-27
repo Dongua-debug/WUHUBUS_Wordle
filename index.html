@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script src="bus-data.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公交站名Wordle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 15px;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border-bottom: 3px solid #3498db;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .game-description {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            line-height: 1.5;
+            text-align: center;
+            color: #ddd;
+        }
+        
+        .highlight {
+            background: rgba(255, 100, 100, 0.3);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        
+        .game-section {
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+        
+        #citySelection {
+            display: block;
+        }
+        
+        .city-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .city-btn {
+            padding: 15px 10px;
+            border-radius: 10px;
+            border: none;
+            background: #3498db;
+            color: white;
+            font-size: 1.0rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .city-btn:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        .city-btn:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .city-btn:hover {
+            transform: translateY(-5px);
+            background: #2980b9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .city-btn .routes-count {
+            font-size: 0.75rem;
+            margin-top: 6px;
+            font-weight: normal;
+            z-index: 2;
+        }
+        
+        .length-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .length-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: #3498db;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        .length-btn:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        .length-btn:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        .length-btn:hover {
+            transform: translateY(-5px);
+            background: #2980b9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .length-btn .count {
+            font-size: 0.65rem;
+            margin-top: 4px;
+            font-weight: normal;
+            z-index: 2;
+        }
+        
+        .game-board-container {
+            max-height: 50vh;
+            overflow-y: auto;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            margin: 10px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-board-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .game-board-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .game-board-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+        
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .guess-row {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .guess-cell {
+            width: 58px;
+            height: 58px;
+            border: 2px solid #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .guess-cell:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 6px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .correct {
+            background-color: #2ecc71;
+            border-color: #27ae60;
+            animation: pop 0.3s ease;
+        }
+        
+        .present {
+            background-color: #f1c40f;
+            border-color: #f39c12;
+            animation: pop 0.3s ease;
+        }
+        
+        .absent {
+            background-color: #7f8c8d;
+            border-color: #34495e;
+            animation: pop 0.3s ease;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .same-line {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .same-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 100, 100, 0.4);
+            z-index: 1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.4; }
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 500px;
+            justify-content: center;
+        }
+        
+        #stationInput {
+            flex: 1;
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #stationInput:focus {
+            border-color: #1abc9c;
+            box-shadow: 0 0 10px rgba(26, 188, 156, 0.5);
+        }
+        
+        button {
+            padding: 12px 18px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        
+        button:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        
+        button:hover:after {
+            transform: rotate(30deg) translate(20%, 20%);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+        }
+        
+        .back-btn {
+            background: #95a5a6;
+            margin: 15px auto;
+            display: block;
+            width: 150px;
+            justify-content: center;
+        }
+        
+        .back-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        .back-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .dev-tools {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(30, 30, 50, 0.8);
+            position: relative;
+            border: 1px solid #3498db;
+            display: none;
+        }
+        
+        .dev-tools:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #3498db, #9b59b6);
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .dev-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .dev-title {
+            color: #f1c40f;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dev-close-btn {
+            background: #e74c3c;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+        
+        .dev-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        
+        .dev-btn {
+            background: #9b59b6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            flex: 1;
+            min-width: 150px;
+            justify-content: center;
+        }
+        
+        .answer-preview {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            border: 1px solid #3498db;
+            display: none; /* 默认隐藏 */
+        }
+        
+        .answer-preview span {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            display: none;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+            animation: scaleIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal-content:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(to right, #3498db, #9b59b6, #2ecc71);
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #f1c40f;
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+        }
+        
+        .modal-stats {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            line-height: 1.6;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .routes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none; /* 默认隐藏 */
+        }
+        
+        .routes-table th {
+            background: #3498db;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        
+        .routes-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #444;
+            font-size: 0.9rem;
+        }
+        
+        .routes-table tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .station-tag {
+            display: inline-block;
+            background: rgba(52, 152, 219, 0.3);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .station-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            background: rgba(52, 152, 219, 0.5);
+        }
+        
+        .route-tag {
+            display: inline-block;
+            background: rgba(155, 89, 182, 0.3);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .route-tag:hover {
+            background: rgba(155, 89, 182, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .attempts-counter {
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 12px 0;
+            color: #f1c40f;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+        
+        .give-up-btn {
+            background: #e74c3c;
+        }
+        
+        .bus-icon {
+            margin-right: 6px;
+        }
+        
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            padding: 12px;
+            animation: fadeIn 1s ease;
+        }
+        
+        .hint-box {
+            background: rgba(30, 40, 60, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            max-width: 700px;
+            border-left: 4px solid #3498db;
+            font-size: 0.9rem;
+            animation: fadeIn 0.6s ease;
+        }
+        
+        .hint-title {
+            color: #3498db;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .toggle-btn {
+            background: #1abc9c;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .mobile-note {
+            color: #f1c40f;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        
+        .dev-content {
+            display: block; /* 默认显示 */
+        }
+        
+        .route-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        
+        .input-controls {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .empty-row .guess-cell {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #555;
+        }
+        
+        /* 计时器样式 */
+        .timer-display {
+            font-size: 1.1rem;
+            text-align: center;
+            margin: 12px 0;
+            color: #3498db;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        
+        /* 弹窗最小化按钮 */
+        .modal-minimize-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            z-index: 99;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-minimize-btn:hover {
+            transform: scale(1.1);
+            background: #2980b9;
+        }
+        
+        /* 高亮行 */
+        .highlighted-row {
+            animation: highlight 2s ease;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: rgba(155, 89, 182, 0.7); }
+            70% { background-color: rgba(155, 89, 182, 0.3); }
+            100% { background-color: transparent; }
+        }
+        
+        /* 移动设备优化 - 主要修改部分 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+        
+            h1 {
+                font-size: 1.7rem;
+                gap: 10px;
+            }
+            
+            /* 城市选择按钮优化 */
+            .city-selection {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            
+            .city-btn {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+                min-width: 90px;
+            }
+            
+            .city-btn .routes-count {
+                font-size: 0.7rem;
+                margin-top: 4px;
+            }
+            
+            /* 字数选择按钮优化 */
+            .length-selection {
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+                gap: 10px;
+            }
+            
+            .length-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.4rem;
+            }
+            
+            .length-btn .count {
+                font-size: 0.6rem;
+            }
+            
+            /* 游戏板单元格优化 */
+            .guess-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.4rem;
+            }
+            
+            /* 输入区域优化 */
+            .input-area {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            #stationInput {
+                width: 100%;
+                font-size: 1.0rem;
+                padding: 12px 15px;
+            }
+            
+            button {
+                width: 100%;
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            /* 开发者工具优化 */
+            .dev-buttons {
+                gap: 8px;
+            }
+            
+            .dev-btn {
+                min-width: 100%;
+                min-height: 60px;
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .dev-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+            
+            .dev-title {
+                font-size: 1rem;
+                flex-direction: column;
+            }
+            
+            /* 结果弹窗优化 */
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .modal-title {
+                font-size: 1.5rem;
+            }
+            
+            .modal-stats {
+                font-size: 1.0rem;
+                padding: 12px;
+            }
+            
+            .modal-buttons, .game-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .back-btn {
+                width: 100%;
+                max-width: 200px;
+                padding: 10px;
+            }
+            
+            /* 其他元素优化 */
+            .dev-tools {
+                margin-top: 15px;
+                padding: 12px;
+            }
+            
+            .dev-title h3 {
+                margin: 8px 0;
+            }
+            
+            .answer-preview {
+                padding: 10px;
+                font-size: 1.0rem;
+            }
+            
+            .game-section {
+                padding-bottom: 20px;
+            }
+        }
+        
+        @media (max-height: 600px) {
+            .container {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        
+            .game-board-container {
+                max-height: 35vh;
+            }
+            
+            .guess-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-bus"></i> 芜湖公交站名Wordle</h1>
+            <div class="game-description">
+                <span class="highlight">绿色</span>表示位置正确，<span class="highlight">黄色</span>表示站名包含该字但位置错误，
+                如果猜的站名和答案在<span class="highlight">同一条线路</span>上，会有<span class="highlight">淡红色背景</span>提示！
+            </div>
+        </header>
+        
+        <!-- 城市选择界面 -->
+        <section id="citySelection" class="game-section">
+            <h2><i class="fas fa-map-marker-alt"></i> 请选择区域</h2>
+            <div class="city-selection" id="citySelectionContainer">
+                <!-- 城市按钮由JS动态生成 -->
+            </div>
+        </section>
+        
+        <!-- 字数选择界面 -->
+        <section id="wordLengthSelection" class="game-section">
+            <h2><i class="fas fa-route"></i> 请选择站名字数</h2>
+            <div class="length-selection" id="lengthSelection">
+                <!-- 按钮由JS动态生成 -->
+            </div>
+            <button id="backToCityBtn" class="back-btn">
+                <i class="fas fa-arrow-left"></i> 返回区域选择
+            </button>
+        </section>
+        
+        <!-- 游戏主界面 -->
+        <section id="gamePlay" class="game-section">
+            <div style="text-align: center; margin-bottom: 10px;">
+                <button id="backToLengthBtn" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> 返回字数选择
+                </button>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 10px;">
+                <div class="attempts-counter"><i class="fas fa-redo"></i> 尝试次数: <span id="attemptCount">0</span></div>
+                <div class="timer-display" style="display: none;"><i class="fas fa-clock"></i> 用时: <span id="timerDisplay">00:00</span></div>
+            </div>
+
+            <div class="game-board-container">
+                <div class="game-board" id="gameBoard">
+                    <!-- 游戏板由JS动态生成 -->
+                </div>
+            </div>
+
+            <div class="input-controls">
+                <div class="input-area">
+                    <input type="text" id="stationInput" placeholder="输入公交站名..." maxlength="-1" autocomplete="off">
+                    <button id="submitGuess"><i class="fas fa-paper-plane"></i> 提交</button>
+                </div>
+                
+                <div class="game-controls">
+                    <button id="giveUpBtn" class="give-up-btn"><i class="fas fa-flag"></i> 认输</button>
+                </div>
+            </div>
+
+            <!-- 开发者工具区域 -->
+            <div class="dev-tools-wrapper">
+                <div class="dev-tools">
+                    <div class="dev-header">
+                        <div class="dev-title">
+                            <i class="fas fa-tools"></i>
+                            <h3>作弊工具</h3>
+                        </div>
+                        <button id="closeDevBtn" class="dev-close-btn">
+                            <i class="fas fa-times"></i> 关闭作弊
+                        </button>
+                    </div>
+                    
+                    <div id="devContent" class="dev-content">
+                        <div class="dev-buttons">
+                            <button id="peekAnswerBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-eye"></i> 偷看答案
+                            </button>
+                            <button id="refreshAnswerBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-sync"></i> 再来一局
+                            </button>
+                            <button id="toggleRoutesBtn" class="dev-btn dev-btn-mobile">
+                                <i class="fas fa-bus"></i> 切换线路表
+                            </button>
+                        </div>
+
+                        <div class="answer-preview" id="answerPreview">
+                            <p>正确答案: <span id="answerDisplay">未选择</span></p>
+                            <div class="route-list" id="routeList">
+                                <!-- 线路标签由JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="routes-table" id="routesTable">
+                <thead>
+                    <tr>
+                        <th>线路</th>
+                        <th>站点(点击站点可设置答案为该站点)</th>
+                    </tr>
+                </thead>
+                <tbody id="routesTableBody">
+                    <!-- 线路表由JS动态生成 -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+    
+    <div class="result-modal" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="resultTitle"><i class="fas fa-trophy"></i> 恭喜你猜对了！</h2>
+            <div id="cheatIndicator" style="color: #e74c3c; font-weight: bold; margin-bottom: 10px; display: none;">
+                <i class="fas fa-exclamation-triangle"></i> 本局使用了作弊功能
+            </div>
+            <div class="modal-stats">
+                <p>区域: <span id="resultCity" style="color:#3498db; font-weight:bold;"></span></p>
+                <p>正确答案: <span id="correctAnswer" style="color:#2ecc71; font-weight:bold;"></span></p>
+                <p>所在线路: </p>
+                <div class="route-list" id="modalRouteList">
+                    <!-- 线路标签由JS动态生成 -->
+                </div>
+                <p>尝试次数: <span id="finalAttemptCount" style="color:#3498db;"></span></p>
+                <p>用时: <span id="finalTimeDisplay" style="color:#f1c40f;"></span></p>
+            </div>
+            <div class="modal-buttons">
+                <button id="playAgainBtn"><i class="fas fa-redo"></i> 再来一局</button>
+                <button id="changeCityBtn"><i class="fas fa-map-marker-alt"></i> 更换区域</button>
+                <button id="changeLengthBtn"><i class="fas fa-exchange-alt"></i> 选择其他字数</button>
+                <button id="closeModalBtn"><i class="fas fa-times"></i> 关闭弹框欣赏过程</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗最小化按钮 -->
+    <button class="modal-minimize-btn" id="modalMinimizeBtn">
+        <i class="fas fa-trophy"></i>
+    </button>
+    
+    <footer>
+        <p><i class="fas fa-code"></i> 芜湖公交站名Wordle - V1.0(在答案框输入鬼狐王会有意想不到的效果)</p>
+    </footer>
+
+    <script>
+        // 城市公交数据
+
+
+        // 游戏状态
+        let gameState = {
+            currentCity: "",          // 当前选择的城市
+            selectedLength: 0,        // 选择的站名字数
+            targetStation: "",        // 目标站名
+            targetRoutes: [],         // 目标站所在线路
+            attempts: 0,              // 尝试次数
+            gameOver: false,          // 游戏是否结束
+            isWin: false,             // 是否胜利
+            currentGuess: "",         // 当前猜测
+            allStations: [],          // 所有站点
+            stationsByLength: {},     // 按长度分组的站点
+            answerVisible: false,     // 答案是否可见
+            routesTableVisible: false,// 线路表是否可见
+            devModeEnabled: false,    // 开发者模式是否启用
+            cheatUsedInGame: false,   // 本局是否使用过作弊
+            timer: null,              // 计时器
+            startTime: 0,             // 开始时间
+            elapsedTime: 0,           // 已用时间
+            firstGuessMade: false,    // 是否已进行第一次猜测
+            finalCheatState: false    // 游戏结束时的作弊状态
+        };
+
+        // DOM元素
+        const elements = {
+            // 城市选择
+            citySelection: document.getElementById('citySelection'),
+            citySelectionContainer: document.getElementById('citySelectionContainer'),
+
+            // 字数选择
+            wordLengthSelection: document.getElementById('wordLengthSelection'),
+            lengthSelection: document.getElementById('lengthSelection'),
+            backToCityBtn: document.getElementById('backToCityBtn'),
+
+            // 游戏主界面
+            gamePlay: document.getElementById('gamePlay'),
+            gameBoard: document.getElementById('gameBoard'),
+            stationInput: document.getElementById('stationInput'),
+            submitGuess: document.getElementById('submitGuess'),
+            attemptCount: document.getElementById('attemptCount'),
+            giveUpBtn: document.getElementById('giveUpBtn'),
+            backToLengthBtn: document.getElementById('backToLengthBtn'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            timerElement: document.querySelector('.timer-display'),
+
+            // 开发者工具
+            devTools: document.querySelector('.dev-tools'),
+            peekAnswerBtn: document.getElementById('peekAnswerBtn'),
+            refreshAnswerBtn: document.getElementById('refreshAnswerBtn'),
+            toggleRoutesBtn: document.getElementById('toggleRoutesBtn'),
+            routesTable: document.getElementById('routesTable'),
+            routesTableBody: document.getElementById('routesTableBody'),
+            answerPreview: document.getElementById('answerPreview'),
+            answerDisplay: document.getElementById('answerDisplay'),
+            routeList: document.getElementById('routeList'),
+            devContent: document.getElementById('devContent'),
+            devTitle: document.querySelector('.dev-title'),
+            closeDevBtn: document.getElementById('closeDevBtn'),
+
+            // 结果弹窗
+            resultModal: document.getElementById('resultModal'),
+            resultTitle: document.getElementById('resultTitle'),
+            resultCity: document.getElementById('resultCity'),
+            correctAnswer: document.getElementById('correctAnswer'),
+            finalAttemptCount: document.getElementById('finalAttemptCount'),
+            finalTimeDisplay: document.getElementById('finalTimeDisplay'),
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            changeCityBtn: document.getElementById('changeCityBtn'),
+            changeLengthBtn: document.getElementById('changeLengthBtn'),
+            modalRouteList: document.getElementById('modalRouteList'),
+            cheatIndicator: document.getElementById('cheatIndicator'),
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            modalMinimizeBtn: document.getElementById('modalMinimizeBtn')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 保存当前开发者模式状态
+            const wasDevModeEnabled = gameState.devModeEnabled;
+            const wasAnswerVisible = gameState.answerVisible;
+            const wasRoutesTableVisible = gameState.routesTableVisible;
+
+            // 停止计时器
+            stopTimer();
+
+            // 创建城市选择按钮
+            createCitySelectionButtons();
+
+            // 显示城市选择界面
+            elements.citySelection.style.display = 'block';
+            elements.wordLengthSelection.style.display = 'none';
+            elements.gamePlay.style.display = 'none';
+            elements.routesTable.style.display = 'none';
+            elements.answerPreview.style.display = 'none';
+            elements.timerElement.style.display = 'none';
+            elements.modalMinimizeBtn.style.display = 'none';
+
+            // 恢复开发者模式状态
+            gameState.devModeEnabled = wasDevModeEnabled;
+            gameState.answerVisible = wasAnswerVisible;
+            gameState.routesTableVisible = wasRoutesTableVisible;
+            gameState.cheatUsedInGame = false;
+            gameState.finalCheatState = false;
+
+            elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
+
+            // 重置游戏相关状态
+            gameState.currentCity = "";
+            gameState.selectedLength = 0;
+            gameState.targetStation = "";
+            gameState.targetRoutes = [];
+            gameState.attempts = 0;
+            gameState.gameOver = false;
+            gameState.isWin = false;
+            gameState.currentGuess = "";
+            gameState.allStations = [];
+            gameState.stationsByLength = {};
+            gameState.firstGuessMade = false;
+            gameState.elapsedTime = 0;
+
+            // 重置返回按钮状态
+            elements.backToLengthBtn.disabled = false;
+        }
+
+        // 创建城市选择按钮
+        function createCitySelectionButtons() {
+            elements.citySelectionContainer.innerHTML = '';
+
+            // 遍历所有城市创建按钮
+            for (const city in cityBusData) {
+                const routesCount = Object.keys(cityBusData[city]).length;
+                const button = document.createElement('button');
+                button.className = 'city-btn';
+                button.innerHTML = `${city}<span class="routes-count">${routesCount}条线路</span>`;
+                button.addEventListener('click', () => selectCity(city));
+                elements.citySelectionContainer.appendChild(button);
+            }
+        }
+
+        // 选择城市
+        function selectCity(city) {
+            gameState.currentCity = city;
+
+            // 收集当前城市的所有站点
+            gameState.allStations = [];
+            const routes = cityBusData[city];
+            for (const route in routes) {
+                gameState.allStations.push(...routes[route]);
+            }
+
+            // 按站名字数分组
+            gameState.stationsByLength = {};
+            gameState.allStations.forEach(station => {
+                const length = station.length;
+                if (!gameState.stationsByLength[length]) {
+                    gameState.stationsByLength[length] = [];
+                }
+                if (!gameState.stationsByLength[length].includes(station)) {
+                    gameState.stationsByLength[length].push(station);
+                }
+            });
+
+            // 创建字数选择按钮
+            elements.lengthSelection.innerHTML = '';
+            const lengths = Object.keys(gameState.stationsByLength).map(Number).sort((a, b) => a - b);
+            lengths.forEach(length => {
+                const count = gameState.stationsByLength[length].length;
+                const button = document.createElement('button');
+                button.className = 'length-btn';
+                button.innerHTML = `${length}<span class="count">${count}个站点</span>`;
+                button.addEventListener('click', () => selectWordLength(length));
+                elements.lengthSelection.appendChild(button);
+            });
+
+            // 切换到字数选择界面
+            elements.citySelection.style.display = 'none';
+            elements.wordLengthSelection.style.display = 'block';
+        }
+
+        // 选择站名字数 - 新增参数targetStation，用于指定目标站点
+        function selectWordLength(length, targetStation = null) {
+            gameState.selectedLength = length;
+            gameState.attempts = 0;
+            gameState.gameOver = false;
+            gameState.isWin = false;
+            gameState.firstGuessMade = false;
+            gameState.elapsedTime = 0;
+            gameState.cheatUsedInGame = gameState.devModeEnabled;
+            gameState.finalCheatState = false;
+
+            // 如果提供了目标站点，则使用它，否则随机选择
+            if (targetStation && targetStation.length === length) {
+                gameState.targetStation = targetStation;
+                
+                // 查找目标站名所在的所有线路
+                gameState.targetRoutes = [];
+                const cityRoutes = cityBusData[gameState.currentCity];
+                for (const route in cityRoutes) {
+                    if (cityRoutes[route].includes(gameState.targetStation)) {
+                        gameState.targetRoutes.push(route);
+                    }
+                }
+            } else {
+                // 随机选择一个目标站名
+                selectRandomTarget();
+            }
+
+            // 创建游戏板
+            createGameBoard();
+
+            // 更新UI
+            elements.attemptCount.textContent = gameState.attempts;
+            elements.wordLengthSelection.style.display = 'none';
+            elements.gamePlay.style.display = 'block';
+            elements.stationInput.value = '';
+            elements.timerDisplay.textContent = formatTime(0);
+            elements.timerElement.style.display = 'none';
+            elements.modalMinimizeBtn.style.display = 'none';
+
+            // 更新答案预览（初始状态隐藏）
+            updateAnswerPreview();
+
+            // 自动聚焦输入框
+            setTimeout(() => {
+                elements.stationInput.focus();
+            }, 300);
+
+            // 确保返回按钮可用
+            elements.backToLengthBtn.disabled = false;
+
+            // 如果开发者模式已启用，显示工具内容
+            if (gameState.devModeEnabled) {
+                elements.devContent.style.display = 'block';
+                
+                // 恢复线路表状态
+                if (gameState.routesTableVisible) {
+                    showRoutesTable();
+                } else {
+                    elements.routesTable.style.display = 'none';
+                }
+            } else {
+                elements.devContent.style.display = 'none';
+                elements.routesTable.style.display = 'none';
+            }
+        }
+
+        // 随机选择目标站名
+        function selectRandomTarget() {
+            const stations = gameState.stationsByLength[gameState.selectedLength];
+            if (stations && stations.length > 0) {
+                gameState.targetStation = stations[Math.floor(Math.random() * stations.length)];
+                
+                // 查找目标站名所在的所有线路
+                gameState.targetRoutes = [];
+                const cityRoutes = cityBusData[gameState.currentCity];
+                for (const route in cityRoutes) {
+                    if (cityRoutes[route].includes(gameState.targetStation)) {
+                        gameState.targetRoutes.push(route);
+                    }
+                }
+                
+                // 刷新线路表
+                if (gameState.devModeEnabled && gameState.routesTableVisible) {
+                    showRoutesTable();
+                }
+            }
+        }
+
+        // 创建游戏板
+        function createGameBoard() {
+            elements.gameBoard.innerHTML = '';
+            addEmptyRow();
+        }
+        
+        // 添加一个空行
+        function addEmptyRow() {
+            const row = document.createElement('div');
+            row.className = 'guess-row empty-row';
+
+            for (let j = 0; j < gameState.selectedLength; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'guess-cell';
+                row.appendChild(cell);
+            }
+
+            elements.gameBoard.appendChild(row);
+        }
+
+        // 提交猜测
+        function submitGuess() {
+            // 游戏结束时，只响应"鬼狐王"输入
+            if (gameState.gameOver) {
+                const guess = elements.stationInput.value.trim();
+                if (guess === "鬼狐王") {
+                    toggleDevMode();
+                    elements.stationInput.value = '';
+                }
+                return;
+            }
+
+            const guess = elements.stationInput.value.trim();
+            if (!guess) return;
+
+            // 检查是否输入了暗号"鬼狐王"来切换开发者模式
+            if (guess === "鬼狐王") {
+                toggleDevMode();
+                elements.stationInput.value = '';
+                return;
+            }
+
+            // 验证输入
+            if (guess.length !== gameState.selectedLength) {
+                alert(`请输入${gameState.selectedLength}个字的站名！`);
+                return;
+            }
+
+            if (!gameState.allStations.includes(guess)) {
+                alert("该站名不存在，请重新输入！");
+                return;
+            }
+
+            // 第一次有效猜测，开始计时
+            if (!gameState.firstGuessMade) {
+                gameState.firstGuessMade = true;
+                startTimer();
+                elements.timerElement.style.display = 'inline-block';
+            }
+
+            // 增加尝试次数
+            gameState.attempts++;
+            elements.attemptCount.textContent = gameState.attempts;
+
+            // 显示猜测结果
+            displayGuessResult(guess);
+
+            // 检查游戏是否结束
+            checkGameEnd(guess);
+
+            // 清空输入框
+            elements.stationInput.value = '';
+
+            // 第一次猜测后禁用返回按钮
+            if (gameState.attempts === 1) {
+                elements.backToLengthBtn.disabled = true;
+            }
+
+            // 滚动到最新一行
+            scrollToLatestRow();
+        }
+        
+        // 切换开发者模式
+        function toggleDevMode() {
+            gameState.devModeEnabled = !gameState.devModeEnabled;
+            
+            // 只有在游戏未结束时，才标记为使用了作弊
+            if (!gameState.gameOver) {
+                gameState.cheatUsedInGame = true;
+            }
+            
+            elements.devTools.style.display = gameState.devModeEnabled ? 'block' : 'none';
+
+            if (gameState.devModeEnabled) {
+                elements.devContent.style.display = 'block';
+                
+                // 恢复线路表状态
+                if (gameState.routesTableVisible) {
+                    showRoutesTable();
+                } else {
+                    elements.routesTable.style.display = 'none';
+                }
+            } else {
+                elements.devContent.style.display = 'none';
+                elements.routesTable.style.display = 'none';
+                elements.answerPreview.style.display = 'none';
+                gameState.answerVisible = false;
+            }
+        }
+        
+        // 滚动到最新一行
+        function scrollToLatestRow() {
+            const container = document.querySelector('.game-board-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        // 显示猜测结果
+        function displayGuessResult(guess) {
+            const target = gameState.targetStation;
+
+            // 获取当前行（最后一行是空行）
+            const rows = elements.gameBoard.children;
+            const currentRow = rows[rows.length - 1];
+
+            // 检查是否在同一条线路上
+            let sameLine = false;
+            const cityRoutes = cityBusData[gameState.currentCity];
+            for (const route in cityRoutes) {
+                if (cityRoutes[route].includes(guess) && cityRoutes[route].includes(target)) {
+                    sameLine = true;
+                    break;
+                }
+            }
+
+            // 创建字符状态数组
+            const charStatus = Array(gameState.selectedLength).fill('absent');
+            const targetChars = target.split('');
+            const guessChars = guess.split('');
+
+            // 首先标记正确位置
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                if (guessChars[i] === targetChars[i]) {
+                    charStatus[i] = 'correct';
+                    targetChars[i] = null; // 标记为已匹配
+                }
+            }
+
+            // 然后标记存在但位置错误的字符
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                if (charStatus[i] === 'correct') continue;
+                
+                const index = targetChars.indexOf(guessChars[i]);
+                if (index !== -1) {
+                    charStatus[i] = 'present';
+                    targetChars[index] = null; // 标记为已匹配
+                }
+            }
+
+            // 更新单元格状态
+            currentRow.classList.remove('empty-row');
+            const cells = currentRow.children;
+
+            // 确保有足够的单元格
+            while (cells.length < gameState.selectedLength) {
+                const cell = document.createElement('div');
+                cell.className = 'guess-cell';
+                currentRow.appendChild(cell);
+            }
+
+            // 应用状态和文字
+            for (let i = 0; i < gameState.selectedLength; i++) {
+                cells[i].textContent = guessChars[i];
+                cells[i].className = `guess-cell ${charStatus[i]}`;
+                
+                // 如果同一条线路，添加额外样式
+                if (sameLine) {
+                    cells[i].classList.add('same-line');
+                }
+            }
+
+            // 游戏未结束时，添加一个新的空行
+            if (!gameState.gameOver) {
+                addEmptyRow();
+            }
+        }
+
+        // 检查游戏是否结束
+        function checkGameEnd(guess) {
+            if (guess === gameState.targetStation) {
+                // 玩家猜对了
+                gameState.gameOver = true;
+                gameState.isWin = true;
+                // 保存游戏结束时的作弊状态
+                gameState.finalCheatState = gameState.cheatUsedInGame;
+                stopTimer();
+                // 游戏结束后启用返回按钮
+                elements.backToLengthBtn.disabled = false;
+                showResultModal(true);
+            }
+        }
+
+        // 认输功能
+        function giveUp() {
+            if (gameState.gameOver) {
+                // 如果游戏已经结束，直接显示结果弹框
+                showResultModal(gameState.isWin);
+            } else {
+                // 正常认输流程
+                gameState.gameOver = true;
+                gameState.isWin = false;
+                // 保存游戏结束时的作弊状态
+                gameState.finalCheatState = gameState.cheatUsedInGame;
+                stopTimer();
+                // 游戏结束后启用返回按钮
+                elements.backToLengthBtn.disabled = false;
+                showResultModal(false);
+            }
+        }
+
+        // 格式化时间显示
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 开始计时器
+        function startTimer() {
+            gameState.startTime = Date.now() - gameState.elapsedTime * 1000;
+            gameState.timer = setInterval(() => {
+                gameState.elapsedTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+                elements.timerDisplay.textContent = formatTime(gameState.elapsedTime);
+            }, 1000);
+        }
+
+        // 停止计时器
+        function stopTimer() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+                gameState.timer = null;
+            }
+        }
+
+        // 显示结果弹窗
+        function showResultModal(isWin) {
+            elements.resultCity.textContent = gameState.currentCity;
+            elements.correctAnswer.textContent = gameState.targetStation;
+            elements.finalAttemptCount.textContent = gameState.attempts;
+            elements.finalTimeDisplay.textContent = formatTime(gameState.elapsedTime);
+            
+            // 显示使用作弊的提示 - 使用游戏结束时保存的状态
+            elements.cheatIndicator.style.display = gameState.finalCheatState ? 'block' : 'none';
+
+            // 更新标题
+            if (isWin) {
+                elements.resultTitle.innerHTML = '<i class="fas fa-trophy"></i> 恭喜你猜对了！';
+            } else {
+                elements.resultTitle.innerHTML = '<i class="fas fa-meh"></i> 很遗憾，你认输了';
+            }
+
+            // 显示线路信息（只显示数字）
+            elements.modalRouteList.innerHTML = '';
+            gameState.targetRoutes.forEach(route => {
+                const routeTag = document.createElement('span');
+                routeTag.className = 'route-tag';
+                routeTag.textContent = route; // 只显示数字，不显示"线路"二字
+                elements.modalRouteList.appendChild(routeTag);
+            });
+
+            // 显示弹窗
+            elements.resultModal.style.display = 'flex';
+            elements.modalMinimizeBtn.style.display = 'flex';
+        }
+
+        // 更新答案预览
+        function updateAnswerPreview() {
+            if (gameState.answerVisible) {
+                elements.answerDisplay.textContent = gameState.targetStation;
+                
+                // 更新线路列表
+                elements.routeList.innerHTML = '';
+                gameState.targetRoutes.forEach(route => {
+                    const routeTag = document.createElement('span');
+                    routeTag.className = 'route-tag';
+                    routeTag.textContent = route;
+                    routeTag.dataset.route = route; // 添加数据属性存储线路号
+                    
+                    // 添加点击事件：跳转到线路表对应行
+                    routeTag.addEventListener('click', function() {
+                        // 如果线路表不可见，直接返回
+                        if (!gameState.routesTableVisible) {
+                            return;
+                        }
+                        
+                        // 查找对应线路的行
+                        const rows = elements.routesTableBody.querySelectorAll('tr');
+                        for (let row of rows) {
+                            const routeCell = row.querySelector('td:first-child');
+                            if (routeCell && routeCell.textContent === route) {
+                                // 滚动到该行
+                                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                // 添加高亮效果
+                                row.classList.add('highlighted-row');
+                                
+                                // 2秒后移除高亮类
+                                setTimeout(() => {
+                                    row.classList.remove('highlighted-row');
+                                }, 2000);
+                                break;
+                            }
+                        }
+                    });
+                    
+                    elements.routeList.appendChild(routeTag);
+                });
+                
+                elements.answerPreview.style.display = 'block';
+            } else {
+                elements.answerPreview.style.display = 'none';
+            }
+        }
+
+        // 显示线路表
+        function showRoutesTable() {
+            elements.routesTableBody.innerHTML = '';
+            const cityRoutes = cityBusData[gameState.currentCity];
+            
+            for (const route in cityRoutes) {
+                const row = document.createElement('tr');
+                
+                // 线路列（只显示数字）
+                const routeCell = document.createElement('td');
+                routeCell.textContent = route; // 只显示数字，不显示"线路"二字
+                row.appendChild(routeCell);
+                
+                // 站点列
+                const stationsCell = document.createElement('td');
+                cityRoutes[route].forEach(station => {
+                    const stationTag = document.createElement('span');
+                    stationTag.className = 'station-tag';
+                    stationTag.textContent = station;
+                    
+                    // 仅在答案可见时高亮显示正确答案
+                    if (gameState.answerVisible && station === gameState.targetStation) {
+                        stationTag.classList.add('correct');
+                        stationTag.style.backgroundColor = '#2ecc71';
+                        stationTag.style.color = 'white';
+                        stationTag.style.fontWeight = 'bold';
+                    } else {
+                        // 移除所有高亮样式
+                        stationTag.classList.remove('correct');
+                        stationTag.style.backgroundColor = '';
+                        stationTag.style.color = '';
+                        stationTag.style.fontWeight = '';
+                    }
+                    
+                    // 点击站点设置为答案 - 清除历史输入并重置游戏
+                    stationTag.addEventListener('click', () => {
+                        // 获取新选择站点的字数
+                        const newLength = station.length;
+                        
+                        // 如果字数与当前设置不同，更新并重新初始化游戏
+                        if (newLength !== gameState.selectedLength) {
+                            // 保存当前开发者模式状态
+                            const wasDevModeEnabled = gameState.devModeEnabled;
+                            const wasAnswerVisible = gameState.answerVisible;
+                            const wasRoutesTableVisible = gameState.routesTableVisible;
+                            
+                            // 选择新的字数，传入目标站点
+                            selectWordLength(newLength, station);
+                            
+                            // 恢复开发者模式状态
+                            gameState.devModeEnabled = wasDevModeEnabled;
+                            gameState.answerVisible = wasAnswerVisible;
+                            gameState.routesTableVisible = wasRoutesTableVisible;
+                            
+                            // 如果之前答案是可见的，保持可见
+                            if (wasAnswerVisible) {
+                                gameState.answerVisible = true;
+                                updateAnswerPreview();
+                            }
+                            
+                            // 如果之前线路表是可见的，保持可见
+                            if (wasRoutesTableVisible) {
+                                showRoutesTable();
+                            }
+                        } else {
+                            // 字数相同，只需重置游戏状态和清空历史记录
+                            gameState.attempts = 0;
+                            gameState.gameOver = false;
+                            gameState.isWin = false;
+                            gameState.currentGuess = "";
+                            gameState.firstGuessMade = false;
+                            gameState.elapsedTime = 0;
+                            elements.attemptCount.textContent = gameState.attempts;
+                            elements.timerDisplay.textContent = formatTime(0);
+                            elements.timerElement.style.display = 'none';
+                            stopTimer();
+                            
+                            // 创建新的游戏板
+                            createGameBoard();
+                            
+                            // 设置新的目标站点
+                            gameState.targetStation = station;
+                            
+                            // 更新目标线路
+                            gameState.targetRoutes = [];
+                            for (const r in cityBusData[gameState.currentCity]) {
+                                if (cityBusData[gameState.currentCity][r].includes(station)) {
+                                    gameState.targetRoutes.push(r);
+                                }
+                            }
+                            
+                            updateAnswerPreview();
+                            showRoutesTable();
+                        }
+                        
+                        // 标记为使用了作弊
+                        gameState.cheatUsedInGame = true;
+                        
+                        // 清空输入框
+                        elements.stationInput.value = '';
+                    });
+                    
+                    stationsCell.appendChild(stationTag);
+                });
+                
+                row.appendChild(stationsCell);
+                elements.routesTableBody.appendChild(row);
+            }
+            
+            elements.routesTable.style.display = 'table';
+        }
+
+        // 偷看/隐藏答案功能
+        function togglePeekAnswer() {
+            gameState.answerVisible = !gameState.answerVisible;
+            gameState.cheatUsedInGame = true; // 只要使用过就标记为作弊
+            updateAnswerPreview();
+            
+            // 如果线路表可见，更新高亮状态
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            }
+        }
+
+        // 刷新谜底功能 - 始终执行再来一局功能
+        function refreshAnswer() {
+            // 关闭结果弹窗
+            elements.resultModal.style.display = 'none';
+            elements.modalMinimizeBtn.style.display = 'none';
+            
+            // 重新开始游戏，保持当前的城市和字数选择
+            selectWordLength(gameState.selectedLength);
+        }
+
+        // 切换线路表显示
+        function toggleRoutesTable() {
+            gameState.routesTableVisible = !gameState.routesTableVisible;
+            gameState.cheatUsedInGame = true;
+            
+            if (gameState.routesTableVisible) {
+                showRoutesTable();
+            } else {
+                elements.routesTable.style.display = 'none';
+            }
+        }
+
+        // 事件监听
+        function setupEventListeners() {
+            // 返回按钮
+            elements.backToCityBtn.addEventListener('click', () => {
+                elements.wordLengthSelection.style.display = 'none';
+                elements.citySelection.style.display = 'block';
+            });
+
+            elements.backToLengthBtn.addEventListener('click', () => {
+                stopTimer();
+                elements.gamePlay.style.display = 'none';
+                elements.wordLengthSelection.style.display = 'block';
+                elements.timerElement.style.display = 'none';
+            });
+
+            // 提交猜测
+            elements.submitGuess.addEventListener('click', submitGuess);
+
+            // 输入框回车提交
+            elements.stationInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    submitGuess();
+                }
+            });
+
+            // 认输按钮
+            elements.giveUpBtn.addEventListener('click', giveUp);
+
+            // 作弊工具按钮
+            elements.peekAnswerBtn.addEventListener('click', togglePeekAnswer);
+            elements.refreshAnswerBtn.addEventListener('click', refreshAnswer);
+            elements.toggleRoutesBtn.addEventListener('click', toggleRoutesTable);
+            elements.closeDevBtn.addEventListener('click', toggleDevMode);
+
+            // 结果弹窗按钮
+            elements.playAgainBtn.addEventListener('click', () => {
+                elements.resultModal.style.display = 'none';
+                elements.modalMinimizeBtn.style.display = 'none';
+                selectWordLength(gameState.selectedLength);
+            });
+
+            elements.changeCityBtn.addEventListener('click', () => {
+                elements.resultModal.style.display = 'none';
+                elements.modalMinimizeBtn.style.display = 'none';
+                initGame();
+            });
+
+            elements.changeLengthBtn.addEventListener('click', () => {
+                elements.resultModal.style.display = 'none';
+                elements.modalMinimizeBtn.style.display = 'none';
+                elements.gamePlay.style.display = 'none';
+                elements.wordLengthSelection.style.display = 'block';
+            });
+
+            elements.closeModalBtn.addEventListener('click', () => {
+                elements.resultModal.style.display = 'none';
+                elements.modalMinimizeBtn.style.display = 'flex';
+            });
+
+            elements.modalMinimizeBtn.addEventListener('click', () => {
+                elements.resultModal.style.display = 'flex';
+                elements.modalMinimizeBtn.style.display = 'none';
+            });
+        }
+
+        // 初始化
+        function init() {
+            setupEventListeners();
+            initGame();
+        }
+
+        // 启动游戏
+        init();
+    </script>
+</body>
+</html>
